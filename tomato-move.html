@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动动番茄钟 - 专注工作，也要动起来</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #FF6B6B;
+            --secondary-color: #4ECDC4;
+            --accent-color: #FFE66D;
+            --dark-color: #2D3436;
+            --light-color: #F8F9FA;
+            --success-color: #00B894;
+            --warning-color: #FD79A8;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 页面容器 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 头部 */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInDown 1s ease-out;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.4s; }
+        .card:nth-child(4) { animation-delay: 0.6s; }
+
+        .card-title {
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 8px;
+            height: 30px;
+            background: var(--primary-color);
+            border-radius: 4px;
+        }
+
+        /* 番茄钟组件 */
+        .timer-section {
+            text-align: center;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .timer-section .card-title::before {
+            background: white;
+        }
+
+        .timer-display {
+            font-size: 6rem;
+            font-weight: bold;
+            margin: 30px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-status {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .timer-progress {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: white;
+            border-radius: 5px;
+            transition: width 1s linear;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        /* 摄像头预览 */
+        .camera-preview {
+            width: 100%;
+            height: 300px;
+            background: #2D3436;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .camera-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .camera-status {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .status-active {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-inactive {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        /* 动作引导 */
+        .exercise-guide {
+            background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .exercise-guide .card-title::before {
+            background: white;
+        }
+
+        .exercise-content {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .exercise-image {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .exercise-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .exercise-name {
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+
+        .exercise-description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .exercise-countdown {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            animation: countDown 1s infinite;
+        }
+
+        /* 数据统计 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: var(--light-color);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* 呼吸动画 */
+        .breathing-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(78, 205, 196, 0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: breathe 4s infinite;
+        }
+
+        .breathing-effect.active {
+            display: flex;
+        }
+
+        .breathing-text {
+            font-size: 3rem;
+            color: white;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .breathing-subtext {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.9);
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes countDown {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes breathe {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 0.9; }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .timer-display {
+                font-size: 4rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .exercise-content {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+
+        /* 检测状态 */
+        .detection-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .detection-active {
+            background: rgba(0, 184, 148, 0.1);
+            color: var(--success-color);
+        }
+
+        .detection-inactive {
+            background: rgba(253, 121, 168, 0.1);
+            color: var(--warning-color);
+        }
+
+        /* 进度环 */
+        .progress-ring {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 30px;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: none;
+            stroke-width: 15;
+            stroke-linecap: round;
+        }
+
+        .progress-ring-circle.bg {
+            stroke: rgba(255,255,255,0.3);
+        }
+
+        .progress-ring-circle.fg {
+            stroke: white;
+            transition: stroke-dashoffset 1s linear;
+        }
+
+        .progress-ring-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .progress-ring-time {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+
+        .progress-ring-label {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 呼吸提醒遮罩 -->
+    <div class="breathing-effect" id="breathingOverlay">
+        <div class="breathing-text">站起来活动一下！</div>
+        <div class="breathing-subtext">你的身体需要你</div>
+    </div>
+
+    <div class="container">
+        <!-- 头部 -->
+        <header>
+            <h1>🍅 动动番茄钟</h1>
+            <p>专注工作 · 也要动起来</p>
+        </header>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 番茄钟 -->
+            <div class="card timer-section">
+                <h2 class="card-title">专注倒计时</h2>
+                
+                <div class="progress-ring">
+                    <svg width="300" height="300">
+                        <circle class="progress-ring-circle bg" cx="150" cy="150" r="140"></circle>
+                        <circle class="progress-ring-circle fg" id="progressCircle" cx="150" cy="150" r="140" stroke-dasharray="880" stroke-dashoffset="0"></circle>
+                    </svg>
+                    <div class="progress-ring-content">
+                        <div class="progress-ring-time" id="timerDisplay">25:00</div>
+                        <div class="progress-ring-label" id="timerStatus">准备开始</div>
+                    </div>
+                </div>
+
+                <div class="timer-controls">
+                    <button class="btn btn-primary" id="startBtn">开始专注</button>
+                    <button class="btn btn-secondary" id="pauseBtn">暂停</button>
+                    <button class="btn btn-secondary" id="resetBtn">重置</button>
+                    <button class="btn btn-success" id="finishBtn">完成</button>
+                </div>
+            </div>
+
+            <!-- 摄像头检测 -->
+            <div class="card">
+                <h2 class="card-title">📷 姿态检测</h2>
+                <div class="camera-preview" id="cameraPreview">
+                    <div class="camera-overlay" id="cameraOverlay">
+                        <div>📹 摄像头预览区域</div>
+                        <button class="btn btn-primary" id="toggleCameraBtn">开启摄像头</button>
+                    </div>
+                    <video id="videoElement" autoplay playsinline></video>
+                </div>
+                <div class="detection-status detection-inactive" id="detectionStatus">
+                    📡 等待摄像头开启...
+                </div>
+            </div>
+
+            <!-- 动作引导 -->
+            <div class="card exercise-guide">
+                <h2 class="card-title">🏋️ 休息活动</h2>
+                <div class="exercise-content">
+                    <div class="exercise-image" id="exerciseImage">🧘</div>
+                    <div class="exercise-info">
+                        <div class="exercise-name" id="exerciseName">颈部拉伸</div>
+                        <div class="exercise-description" id="exerciseDescription">
+                            缓慢将头部向左侧倾斜，感受右侧颈部的拉伸感，保持15秒。然后慢慢回到中间，再向右侧倾斜。
+                        </div>
+                        <div class="exercise-countdown" id="exerciseCountdown">30</div>
+                    </div>
+                </div>
+                <div class="timer-controls" style="margin-top: 20px;">
+                    <button class="btn btn-primary" id="startExerciseBtn">开始活动</button>
+                    <button class="btn btn-success" id="completeExerciseBtn">完成活动</button>
+                </div>
+            </div>
+
+            <!-- 数据统计 -->
+            <div class="card">
+                <h2 class="card-title">📊 今日数据</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="todayPomodoros">0</div>
+                        <div class="stat-label">完成番茄</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="todayMinutes">0</div>
+                        <div class="stat-label">活动分钟</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="todayStreak">0</div>
+                        <div class="stat-label">连续天数</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 产品特点 -->
+        <div class="main-content">
+            <div class="card">
+                <h2 class="card-title">🎯 智能检测</h2>
+                <p style="color: #666; line-height: 1.8; font-size: 1.1rem;">
+                    通过摄像头实时监测你的姿态，当番茄钟结束时，自动检测你是否离开座位。如果检测到你仍坐着，会通过呼吸动画提醒你起身活动。
+                </p>
+            </div>
+            <div class="card">
+                <h2 class="card-title">🏃 动作引导</h2>
+                <p style="color: #666; line-height: 1.8; font-size: 1.1rem;">
+                    内置多种办公室放松动作，每个动作都有详细的文字说明和倒计时。从颈部拉伸到肩部环绕，帮助你科学地放松身体。
+                </p>
+            </div>
+            <div class="card">
+                <h2 class="card-title">📈 数据追踪</h2>
+                <p style="color: #666; line-height: 1.8; font-size: 1.1rem;">
+                    记录你每天完成的番茄数、活动时间和连续打卡天数。数据可视化让你清楚地看到自己的专注和健康状况。
+                </p>
+            </div>
+            <div class="card">
+                <h2 class="card-title">⚡ 多端同步</h2>
+                <p style="color: #666; line-height: 1.8; font-size: 1.1rem;">
+                    支持手机端和电脑端使用，数据云端同步。无论你在办公室还是在家，都能保持一致的专注和健康习惯。
+                </p>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <footer style="text-align: center; color: white; padding: 30px; opacity: 0.8;">
+            <p>让专注更健康 · 让工作更高效</p>
+            <p style="margin-top: 10px; font-size: 0.8rem;">动动番茄钟 - 你的健康工作伙伴</p>
+        </footer>
+    </div>
+
+    <script>
+        // 番茄钟状态
+        let timerState = 'idle'; // idle, running, paused, break
+        let timerInterval = null;
+        let timeLeft = 25 * 60; // 25分钟
+        let totalTime = 25 * 60;
+        
+        // 活动状态
+        let exerciseState = 'idle';
+        let exerciseInterval = null;
+        let exerciseTimeLeft = 30;
+        
+        // 数据统计
+        let todayPomodoros = 0;
+        let todayMinutes = 0;
+        let todayStreak = 7;
+        
+        // DOM元素
+        const timerDisplay = document.getElementById('timerDisplay');
+        const timerStatus = document.getElementById('timerStatus');
+        const progressCircle = document.getElementById('progressCircle');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const finishBtn = document.getElementById('finishBtn');
+        const breathingOverlay = document.getElementById('breathingOverlay');
+        
+        const cameraPreview = document.getElementById('cameraPreview');
+        const cameraOverlay = document.getElementById('cameraOverlay');
+        const videoElement = document.getElementById('videoElement');
+        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+        const detectionStatus = document.getElementById('detectionStatus');
+        
+        const exerciseImage = document.getElementById('exerciseImage');
+        const exerciseName = document.getElementById('exerciseName');
+        const exerciseDescription = document.getElementById('exerciseDescription');
+        const exerciseCountdown = document.getElementById('exerciseCountdown');
+        const startExerciseBtn = document.getElementById('startExerciseBtn');
+        const completeExerciseBtn = document.getElementById('completeExerciseBtn');
+        
+        const todayPomodorosEl = document.getElementById('todayPomodoros');
+        const todayMinutesEl = document.getElementById('todayMinutes');
+        const todayStreakEl = document.getElementById('todayStreak');
+        
+        // 动作列表
+        const exercises = [
+            {
+                emoji: '🧘',
+                name: '颈部拉伸',
+                description: '缓慢将头部向左侧倾斜，感受右侧颈部的拉伸感，保持15秒。然后慢慢回到中间，再向右侧倾斜。'
+            },
+            {
+                emoji: '💪',
+                name: '肩部环绕',
+                description: '双肩向上耸起，然后向前、向下、向后做圆周运动。重复10次后，反向再做10次。'
+            },
+            {
+                emoji: '🤸',
+                name: '手臂伸展',
+                description: '双手交叉举过头顶，掌心向上，慢慢向左右两侧伸展。感受腋下和腰部的拉伸。'
+            },
+            {
+                emoji: '🧎',
+                name: '坐姿扭转',
+                description: '坐在椅子上，身体慢慢向右侧扭转，右手抓住椅背。保持15秒后换另一侧。'
+            },
+            {
+                emoji: '🦵',
+                name: '腿部拉伸',
+                description: '双脚并拢站立，慢慢向前弯腰，双手尽量触摸地面。感受大腿后侧和背部的拉伸。'
+            }
+        ];
+        
+        let currentExerciseIndex = 0;
+        
+        // 更新倒计时显示
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // 更新进度环
+            const circumference = 2 * Math.PI * 140;
+            const progress = (totalTime - timeLeft) / totalTime;
+            const offset = circumference - (progress * circumference);
+            progressCircle.style.strokeDashoffset = offset;
+        }
+        
+        // 开始专注
+        startBtn.addEventListener('click', () => {
+            if (timerState === 'idle' || timerState === 'paused') {
+                timerState = 'running';
+                timerStatus.textContent = '专注中...';
+                timerStatus.style.color = 'white';
+                
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        timerState = 'break';
+                        timerStatus.textContent = '休息时间！';
+                        timerStatus.style.color = '#FFE66D';
+                        
+                        // 显示呼吸提醒
+                        breathingOverlay.classList.add('active');
+                        
+                        // 检查是否有摄像头
+                        if (navigator.mediaDevices && videoElement.srcObject) {
+                            // 模拟检测用户是否活动
+                            setTimeout(checkActivity, 5000);
+                        }
+                    }
+                }, 1000);
+            }
+        });
+        
+        // 暂停
+        pauseBtn.addEventListener('click', () => {
+            if (timerState === 'running') {
+                timerState = 'paused';
+                timerStatus.textContent = '已暂停';
+                clearInterval(timerInterval);
+            }
+        });
+        
+        // 重置
+        resetBtn.addEventListener('click', () => {
+            timerState = 'idle';
+            timeLeft = 25 * 60;
+            totalTime = 25 * 60;
+            timerStatus.textContent = '准备开始';
+            timerStatus.style.color = 'white';
+            updateTimerDisplay();
+            clearInterval(timerInterval);
+            breathingOverlay.classList.remove('active');
+        });
+        
+        // 完成番茄钟
+        finishBtn.addEventListener('click', () => {
+            if (timerState === 'running' || timerState === 'paused') {
+                clearInterval(timerInterval);
+                timerState = 'idle';
+                timeLeft = 25 * 60;
+                totalTime = 25 * 60;
+                timerStatus.textContent = '完成！';
+                timerStatus.style.color = '#4ECDC4';
+                updateTimerDisplay();
+                
+                // 更新数据
+                todayPomodoros++;
+                todayPomodorosEl.textContent = todayPomodoros;
+            }
+        });
+        
+        // 模拟活动检测
+        function checkActivity() {
+            // 随机模拟检测结果
+            const isActive = Math.random() > 0.3;
+            
+            if (isActive) {
+                detectionStatus.textContent = '✅ 检测到活动！继续加油！';
+                detectionStatus.className = 'detection-status detection-active';
+                breathingOverlay.classList.remove('active');
+            } else {
+                detectionStatus.textContent = '⚠️ 检测到久坐，请立即活动！';
+                detectionStatus.className = 'detection-status detection-inactive';
+                // 呼吸提醒继续显示
+            }
+        }
+        
+        // 摄像头控制
+        toggleCameraBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+                cameraOverlay.style.display = 'none';
+                detectionStatus.textContent = '📡 正在监测你的姿态...';
+                detectionStatus.className = 'detection-status detection-active';
+                toggleCameraBtn.textContent = '关闭摄像头';
+            } catch (err) {
+                alert('无法访问摄像头，请检查权限设置');
+            }
+        });
+        
+        // 切换动作
+        function switchExercise() {
+            currentExerciseIndex = (currentExerciseIndex + 1) % exercises.length;
+            const exercise = exercises[currentExerciseIndex];
+            exerciseImage.textContent = exercise.emoji;
+            exerciseName.textContent = exercise.name;
+            exerciseDescription.textContent = exercise.description;
+        }
+        
+        // 开始活动
+        startExerciseBtn.addEventListener('click', () => {
+            if (exerciseState === 'idle') {
+                exerciseState = 'running';
+                exerciseTimeLeft = 30;
+                
+                exerciseInterval = setInterval(() => {
+                    exerciseTimeLeft--;
+                    exerciseCountdown.textContent = exerciseTimeLeft;
+                    
+                    if (exerciseTimeLeft <= 0) {
+                        switchExercise();
+                        exerciseTimeLeft = 30;
+                    }
+                }, 1000);
+            }
+        });
+        
+        // 完成活动
+        completeExerciseBtn.addEventListener('click', () => {
+            if (exerciseState === 'running') {
+                clearInterval(exerciseInterval);
+                exerciseState = 'idle';
+                exerciseTimeLeft = 30;
+                exerciseCountdown.textContent = 30;
+                
+                // 更新数据
+                todayMinutes += 5;
+                todayMinutesEl.textContent = todayMinutes;
+                
+                // 关闭呼吸提醒
+                breathingOverlay.classList.remove('active');
+                
+                // 重置番茄钟
+                timerState = 'idle';
+                timeLeft = 25 * 60;
+                totalTime = 25 * 60;
+                timerStatus.textContent = '准备开始';
+                timerStatus.style.color = 'white';
+                updateTimerDisplay();
+            }
+        });
+        
+        // 初始化显示
+        updateTimerDisplay();
+        todayPomodorosEl.textContent = todayPomodoros;
+        todayMinutesEl.textContent = todayMinutes;
+        todayStreakEl.textContent = todayStreak;
+    </script>
+</body>
+</html>
