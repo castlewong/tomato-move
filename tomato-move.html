@@ -375,6 +375,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transform: scaleX(-1);
         }
         .cam-overlay {
             position: absolute;
@@ -405,6 +406,22 @@
             transition: transform 0.15s;
         }
         .cam-btn:hover { transform: scale(1.05); }
+        .cam-close-btn {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 6;
+            display: none;
+            padding: 8px 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 999px;
+            background: rgba(10,10,11,0.62);
+            backdrop-filter: blur(12px);
+            color: white;
+            font: 500 12px var(--font-sans);
+            cursor: pointer;
+        }
+        .cam-close-btn.visible { display: block; }
         .cam-status {
             position: absolute;
             bottom: 16px;
@@ -418,7 +435,7 @@
             font-weight: 500;
             color: var(--ink);
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 10px;
             z-index: 5;
         }
@@ -428,8 +445,47 @@
             height: 8px;
             border-radius: 50%;
             background: var(--moss);
+            flex: 0 0 auto;
+            margin-top: 4px;
         }
         .cam-status.inactive::before { background: var(--accent); }
+        .cam-status.warning::before { background: #F5A524; }
+        .cam-status.active::before { background: #21B66F; box-shadow: 0 0 0 4px rgba(33,182,111,0.12); }
+        .cam-status.complete::before { background: #21B66F; box-shadow: 0 0 12px rgba(33,182,111,0.7); }
+        .cam-status.error::before { background: #E5484D; }
+        .cam-status-body { flex: 1; min-width: 0; }
+        .cam-status-title {
+            display: block;
+            font-size: 13px;
+            font-weight: 650;
+            line-height: 1.25;
+        }
+        .cam-status-hint {
+            display: block;
+            margin-top: 3px;
+            color: var(--ink-mute);
+            font-size: 11px;
+            font-weight: 450;
+            line-height: 1.35;
+        }
+        .cam-progress {
+            width: 72px;
+            height: 5px;
+            margin-top: 6px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(10,10,11,0.09);
+            flex: 0 0 auto;
+        }
+        .cam-progress-fill {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--moss);
+            transition: width 0.16s linear, background 0.2s;
+        }
+        .cam-status.warning .cam-progress-fill { background: #F5A524; }
+        .cam-status.complete .cam-progress-fill { background: #21B66F; }
 
         /* Timer Tile (Row 1, left) */
         .tile-timer {
@@ -524,77 +580,139 @@
             color: var(--accent);
         }
 
-        /* Data Tile (Row 1, right) */
-        .data-row {
-            display: flex;
-            align-items: stretch;
-            gap: 0;
-            height: calc(100% - 40px);
+        /* Daily rhythm dashboard */
+        .tile-data {
+            background:
+                radial-gradient(circle at 92% 8%, rgba(255, 122, 87, 0.22), transparent 34%),
+                linear-gradient(145deg, #17221D 0%, #20352A 100%);
+            color: white;
+            border: none;
+            box-shadow: 0 20px 45px rgba(28, 51, 40, 0.16);
         }
-        .data-cell {
-            flex: 1;
+        .tile-data::after {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            right: -64px;
+            bottom: -94px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 50%;
+            box-shadow: 0 0 0 24px rgba(255,255,255,0.025), 0 0 0 52px rgba(255,255,255,0.018);
+        }
+        .tile-data:hover { box-shadow: 0 24px 54px rgba(28, 51, 40, 0.23); }
+        .data-heading {
+            justify-content: space-between;
+            color: rgba(255,255,255,0.64);
+            position: relative;
+            z-index: 1;
+        }
+        .data-date {
+            padding: 5px 9px;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 999px;
+            color: rgba(255,255,255,0.78);
+            font-size: 10px;
+            letter-spacing: 0.06em;
+        }
+        .data-dashboard {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 12px;
+            height: calc(100% - 36px);
+            position: relative;
+            z-index: 1;
+        }
+        .data-primary, .data-mini {
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.075);
+            backdrop-filter: blur(12px);
+        }
+        .data-primary {
+            border-radius: 20px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            padding: 0 4px;
+            justify-content: space-between;
         }
-        .data-divider {
-            width: 1px;
-            background: var(--line);
-            margin: 0 8px;
+        .data-kicker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+        }
+        .data-kicker-mark {
+            width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+            border-radius: 8px;
+            background: #FF7957;
+            color: white;
+            font-size: 11px;
         }
         .data-num {
-            font-size: 42px;
+            font-size: 50px;
             font-weight: 500;
-            letter-spacing: -0.03em;
-            color: var(--ink);
-            line-height: 1;
+            letter-spacing: -0.055em;
+            color: white;
+            line-height: 0.92;
             font-variant-numeric: tabular-nums;
         }
         .data-unit {
-            font-size: 18px;
-            font-weight: 400;
-            color: var(--ink-mute);
-            margin-left: 2px;
-        }
-        .data-label {
-            font-size: 12px;
-            color: var(--ink-mute);
-            margin-top: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            font-size: 13px;
             font-weight: 500;
+            color: rgba(255,255,255,0.48);
+            margin-left: 5px;
+            letter-spacing: 0;
         }
-        .data-delta {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 12px;
-            color: var(--moss);
-            font-weight: 500;
+        .data-caption {
+            font-size: 11px;
+            color: rgba(255,255,255,0.46);
             margin-top: 8px;
         }
-
-        /* Streak tile */
-        .streak-row {
+        .data-stack {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+        }
+        .data-mini {
+            border-radius: 16px;
+            padding: 12px 14px;
             display: flex;
-            gap: 6px;
-            margin-top: 12px;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
         }
-        .streak-dot {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--surface-2);
+        .data-mini-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.56);
+            margin-bottom: 5px;
         }
-        .streak-dot.active { background: var(--accent); }
-        .streak-count {
-            font-size: 56px;
+        .data-mini-value {
+            font-size: 24px;
+            line-height: 1;
             font-weight: 500;
             letter-spacing: -0.04em;
-            color: var(--ink);
-            line-height: 1;
+            font-variant-numeric: tabular-nums;
         }
+        .data-mini-value small {
+            font-size: 11px;
+            color: rgba(255,255,255,0.45);
+            margin-left: 3px;
+        }
+        .data-mini-icon {
+            width: 32px;
+            height: 32px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            color: #17221D;
+            background: #D9F3DF;
+            font-size: 15px;
+        }
+        .data-mini:last-child .data-mini-icon { background: #FFE1D8; }
 
         /* Exercise tile (1/3 width - compact) */
         .exercise-stage {
@@ -654,7 +772,7 @@
         .progress-fill {
             height: 100%;
             background: white;
-            width: 60%;
+            width: 0%;
             border-radius: 2px;
             transition: width 0.5s;
         }
@@ -684,6 +802,108 @@
             background: transparent;
             color: white;
             border: 1px solid rgba(255,255,255,0.4);
+        }
+        .ex-btn:disabled { opacity: 0.42; cursor: not-allowed; }
+
+        /* Douyin conversion section */
+        .douyin-section { padding: 96px 0 112px; }
+        .douyin-card {
+            position: relative;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+            align-items: center;
+            gap: 72px;
+            padding: 64px;
+            border-radius: 36px;
+            background: #171717;
+            color: white;
+            box-shadow: 0 30px 80px rgba(10,10,11,0.18);
+        }
+        .douyin-card::before {
+            content: '';
+            position: absolute;
+            width: 420px;
+            height: 420px;
+            left: -170px;
+            top: -210px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,91,54,0.3), rgba(255,91,54,0));
+        }
+        .douyin-copy { position: relative; z-index: 1; }
+        .douyin-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 24px;
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.58);
+        }
+        .douyin-eyebrow::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #FE2C55;
+            box-shadow: 5px 0 0 #25F4EE;
+        }
+        .douyin-copy h2 {
+            max-width: 560px;
+            font-size: clamp(36px, 4.8vw, 64px);
+            line-height: 1.02;
+            letter-spacing: -0.045em;
+            font-weight: 560;
+            margin-bottom: 22px;
+        }
+        .douyin-copy p {
+            max-width: 500px;
+            font-size: 17px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.62);
+        }
+        .douyin-handle {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 28px;
+            padding: 10px 16px;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.86);
+            font-size: 13px;
+        }
+        .douyin-visual {
+            position: relative;
+            z-index: 1;
+            justify-self: end;
+            width: min(100%, 330px);
+            padding: 12px;
+            border-radius: 28px;
+            background: white;
+            transform: rotate(2deg);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.34);
+            transition: transform 0.3s ease;
+        }
+        .douyin-visual:hover { transform: rotate(0deg) scale(1.015); }
+        .douyin-visual img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 18px;
+        }
+        .douyin-scan-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 6px 3px;
+            color: #171717;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
         }
 
         /* Principles */
@@ -799,6 +1019,17 @@
             font-size: 16px;
             opacity: 0.8;
         }
+        .breath-actions { display: flex; gap: 10px; }
+        .breath-btn {
+            padding: 12px 20px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.35);
+            background: transparent;
+            color: white;
+            font: 500 14px var(--font-sans);
+            cursor: pointer;
+        }
+        .breath-btn.primary { background: white; color: var(--moss); border-color: white; }
 
         @media (max-width: 968px) {
             .hero { grid-template-columns: 1fr; padding: 48px 0; gap: 40px; }
@@ -808,12 +1039,26 @@
                 grid-column: span 1; grid-row: span 1;
             }
             .tile-cam { min-height: 360px; }
-            .data-row { gap: 8px; }
-            .data-num { font-size: 32px; }
+            .tile-data { min-height: 270px; }
+            .data-num { font-size: 46px; }
             .principles { grid-template-columns: 1fr; gap: 32px; }
             .stats-strip { grid-template-columns: repeat(2, 1fr); gap: 24px; }
             .nav-links { display: none; }
             section { padding: 60px 0; }
+            .douyin-card { grid-template-columns: 1fr; gap: 44px; padding: 44px; }
+            .douyin-visual { justify-self: center; }
+        }
+        @media (max-width: 560px) {
+            .container { padding: 0 18px; }
+            .tile { padding: 22px; border-radius: 22px; }
+            .data-dashboard { grid-template-columns: 1fr; height: auto; }
+            .data-primary { min-height: 150px; }
+            .data-stack { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+            .data-mini { padding: 12px; }
+            .data-mini-icon { display: none; }
+            .douyin-section { padding: 60px 0 76px; }
+            .douyin-card { padding: 32px 22px; border-radius: 26px; }
+            .douyin-copy p { font-size: 15px; }
         }
     </style>
 </head>
@@ -828,8 +1073,7 @@
         <div class="nav-links">
             <a href="#method">方法</a>
             <a href="#science">科学</a>
-            <a href="#method">用户故事</a>
-            <a href="#method">下载</a>
+            <a href="#douyin">关注抖音</a>
         </div>
         <button class="nav-cta" id="navStartBtn">开始使用</button>
     </div>
@@ -864,37 +1108,32 @@
         </div>
 
         <div class="tile tile-data">
-            <div class="tile-label">今日数据</div>
-            <div class="data-row">
-                <div class="data-cell">
-                    <div class="data-num" id="todayPomodoros">0</div>
-                    <div class="data-label">完成番茄</div>
-                    <div class="data-delta">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
-                        较昨日 +2
+            <div class="tile-label data-heading">
+                <span>今日节奏</span>
+                <span class="data-date" id="todayDate">TODAY</span>
+            </div>
+            <div class="data-dashboard">
+                <div class="data-primary">
+                    <div class="data-kicker"><span class="data-kicker-mark">P</span>完成番茄</div>
+                    <div>
+                        <div class="data-num"><span id="todayPomodoros">0</span><span class="data-unit">个</span></div>
+                        <div class="data-caption">每一次完成，都是专注的闭环</div>
                     </div>
                 </div>
-                <div class="data-divider"></div>
-                <div class="data-cell">
-                    <div class="data-num"><span id="todayMinutes">0</span><span class="data-unit">分</span></div>
-                    <div class="data-label">活动时长</div>
-                    <div class="data-delta">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
-                        较昨日 +8
+                <div class="data-stack">
+                    <div class="data-mini">
+                        <div>
+                            <div class="data-mini-label">活动时长</div>
+                            <div class="data-mini-value"><span id="todayMinutes">0</span><small>分钟</small></div>
+                        </div>
+                        <div class="data-mini-icon">↗</div>
                     </div>
-                </div>
-                <div class="data-divider"></div>
-                <div class="data-cell">
-                    <div class="data-num" id="todayStreak">7</div>
-                    <div class="data-label">连续天数</div>
-                    <div class="streak-row">
-                        <div class="streak-dot active"></div>
-                        <div class="streak-dot active"></div>
-                        <div class="streak-dot active"></div>
-                        <div class="streak-dot active"></div>
-                        <div class="streak-dot active"></div>
-                        <div class="streak-dot active"></div>
-                        <div class="streak-dot active"></div>
+                    <div class="data-mini">
+                        <div>
+                            <div class="data-mini-label">连续坚持</div>
+                            <div class="data-mini-value"><span id="todayStreak">7</span><small>天</small></div>
+                        </div>
+                        <div class="data-mini-icon">✦</div>
                     </div>
                 </div>
             </div>
@@ -909,8 +1148,13 @@
                 </div>
                 <video id="videoElement" autoplay playsinline></video>
                 <canvas id="outputCanvas"></canvas>
+                <button class="cam-close-btn" id="cameraStopBtn">关闭摄像头</button>
                 <div class="cam-status inactive" id="camStatus">
-                    <span id="detectionStatus">等待开启</span>
+                    <div class="cam-status-body">
+                        <span class="cam-status-title" id="detectionStatus">等待开启</span>
+                        <small class="cam-status-hint" id="detectionHint">开启后请确保全身进入画面</small>
+                    </div>
+                    <div class="cam-progress" aria-hidden="true"><div class="cam-progress-fill" id="camProgressFill"></div></div>
                 </div>
             </div>
         </div>
@@ -928,7 +1172,7 @@
                     </div>
                     <div class="exercise-actions">
                         <button class="ex-btn" id="startExerciseBtn">开始</button>
-                        <button class="ex-btn alt" id="completeExerciseBtn">完成</button>
+                        <button class="ex-btn alt" id="completeExerciseBtn" disabled>完成</button>
                     </div>
                 </div>
             </div>
@@ -962,6 +1206,21 @@
     </div>
 </section>
 
+<section class="douyin-section" id="douyin">
+    <div class="douyin-card">
+        <div class="douyin-copy">
+            <div class="douyin-eyebrow">Follow the build</div>
+            <h2>一起把专注，<br>练成身体记忆。</h2>
+            <p>关注我的抖音，看看 Pomo 如何从一个想法被做成真正可用的产品，也会持续分享 AI、Vibe Coding 和效率实验。</p>
+            <div class="douyin-handle">抖音 @王行知 · 37406473830</div>
+        </div>
+        <figure class="douyin-visual">
+            <img src="抖音码.png" alt="王行知的抖音二维码" loading="lazy">
+            <figcaption class="douyin-scan-hint">打开抖音，扫码关注</figcaption>
+        </figure>
+    </div>
+</section>
+
 </main>
 
 <footer>
@@ -983,6 +1242,10 @@
         <div class="breath-title">站起来活动一下</div>
         <div class="breath-sub">Pomo 在等你的身体</div>
     </div>
+    <div class="breath-actions">
+        <button class="breath-btn" id="dismissBreakBtn">稍后提醒</button>
+        <button class="breath-btn primary" id="startBreakExerciseBtn">开始 30 秒活动</button>
+    </div>
 </div>
 
 <script>
@@ -1001,13 +1264,29 @@
 
     let pose = null;
     let isCameraActive = false;
-    let isStanding = false;
-    let isMoving = false;
-    let lastLandmarks = null;
-    let activityFrames = 0;
-    let stationaryFrames = 0;
-    let movementFrames = 0;
-    let lastStatusText = '';
+    let poseState = 'idle';
+    let lastNormalizedPose = null;
+    let movementSamples = [];
+    let standingCandidateSince = 0;
+    let missingSince = 0;
+    let activityProgressMs = 0;
+    let lastPoseResultAt = 0;
+    let lastInferenceAt = 0;
+    let isPoseProcessing = false;
+    let consecutivePoseErrors = 0;
+    let activityAwardedForBreak = false;
+
+    const POSE_CONFIG = {
+        minVisibility: 0.58,
+        standingAngle: 152,
+        standingConfirmMs: 900,
+        lostPersonMs: 650,
+        movementWindowMs: 1200,
+        movementThreshold: 0.025,
+        movementRatio: 0.28,
+        activityGoalMs: 5000,
+        maxInferenceFps: 12
+    };
 
     const heroTime = document.getElementById('heroTime');
     const heroLabel = document.getElementById('heroLabel');
@@ -1017,13 +1296,18 @@
     const finishBtn = document.getElementById('finishBtn');
     const navStartBtn = document.getElementById('navStartBtn');
     const breathingOverlay = document.getElementById('breathingOverlay');
+    const dismissBreakBtn = document.getElementById('dismissBreakBtn');
+    const startBreakExerciseBtn = document.getElementById('startBreakExerciseBtn');
 
     const videoElement = document.getElementById('videoElement');
     const outputCanvas = document.getElementById('outputCanvas');
     const camOverlay = document.getElementById('camOverlay');
     const camStatus = document.getElementById('camStatus');
     const detectionStatus = document.getElementById('detectionStatus');
+    const detectionHint = document.getElementById('detectionHint');
+    const camProgressFill = document.getElementById('camProgressFill');
     const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+    const cameraStopBtn = document.getElementById('cameraStopBtn');
 
     const exerciseImage = document.getElementById('exerciseImage');
     const exerciseName = document.getElementById('exerciseName');
@@ -1036,6 +1320,7 @@
     const todayPomodorosEl = document.getElementById('todayPomodoros');
     const todayMinutesEl = document.getElementById('todayMinutes');
     const todayStreakEl = document.getElementById('todayStreak');
+    const todayDateEl = document.getElementById('todayDate');
 
     const exercises = [
         { emoji: '🧘', name: '颈部放松', desc: '缓慢将头部向左侧倾斜，感受右侧颈部的拉伸感，保持 15 秒。' },
@@ -1046,6 +1331,41 @@
     ];
     let currentExerciseIndex = 0;
 
+    const localDateKey = () => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    };
+    const statsStorageKey = `pomo-stats-${localDateKey()}`;
+
+    function loadDailyStats() {
+        try {
+            const saved = JSON.parse(localStorage.getItem(statsStorageKey));
+            if (saved) {
+                todayPomodoros = Number(saved.pomodoros) || 0;
+                todayMinutes = Number(saved.minutes) || 0;
+            }
+        } catch (error) {
+            console.warn('今日数据读取失败，将使用默认值。', error);
+        }
+    }
+
+    function saveDailyStats() {
+        try {
+            localStorage.setItem(statsStorageKey, JSON.stringify({ pomodoros: todayPomodoros, minutes: todayMinutes }));
+        } catch (error) {
+            console.warn('今日数据暂时无法保存。', error);
+        }
+    }
+
+    function setTimerButton(mode) {
+        const isPause = mode === 'pause';
+        startBtn.title = isPause ? '暂停' : '开始';
+        startBtn.setAttribute('aria-label', isPause ? '暂停倒计时' : '开始倒计时');
+        startBtn.innerHTML = isPause
+            ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>'
+            : '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+    }
+
     function updateTimer() {
         const m = Math.floor(timeLeft / 60);
         const s = timeLeft % 60;
@@ -1055,17 +1375,33 @@
     }
 
     function startTimer() {
-        if (timerState === 'running') return;
-        if (timerState === 'paused') { timerState = 'running'; heroLabel.textContent = '专注中'; return; }
+        if (timerState === 'running') {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerState = 'paused';
+            heroLabel.textContent = '已暂停';
+            setTimerButton('play');
+            return;
+        }
+        if (timerState === 'break') {
+            timeLeft = 25 * 60;
+            totalTime = 25 * 60;
+            breathingOverlay.classList.remove('active');
+            updateTimer();
+        }
         timerState = 'running';
         heroLabel.textContent = '专注中';
+        setTimerButton('pause');
         timerInterval = setInterval(() => {
             timeLeft--;
             updateTimer();
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
+                timerInterval = null;
                 timerState = 'break';
+                activityAwardedForBreak = false;
                 heroLabel.textContent = '休息一下';
+                setTimerButton('play');
                 breathingOverlay.classList.add('active');
             }
         }, 1000);
@@ -1073,23 +1409,28 @@
 
     function resetTimer() {
         clearInterval(timerInterval);
+        timerInterval = null;
         timerState = 'idle';
         timeLeft = 25 * 60;
         totalTime = 25 * 60;
         heroLabel.textContent = '准备开始';
+        setTimerButton('play');
         breathingOverlay.classList.remove('active');
         updateTimer();
     }
 
     function finishPomo() {
         clearInterval(timerInterval);
+        timerInterval = null;
         timerState = 'idle';
         timeLeft = 25 * 60;
         totalTime = 25 * 60;
         heroLabel.textContent = '完成！';
+        setTimerButton('play');
         breathingOverlay.classList.remove('active');
         todayPomodoros++;
         todayPomodorosEl.textContent = todayPomodoros;
+        saveDailyStats();
         updateTimer();
     }
 
@@ -1097,105 +1438,242 @@
     resetBtn.addEventListener('click', resetTimer);
     finishBtn.addEventListener('click', finishPomo);
     navStartBtn.addEventListener('click', () => document.getElementById('method').scrollIntoView({ behavior: 'smooth' }));
+    dismissBreakBtn.addEventListener('click', () => breathingOverlay.classList.remove('active'));
 
     function drawPose(results) {
         const ctx = outputCanvas.getContext('2d');
-        outputCanvas.width = videoElement.videoWidth || 640;
-        outputCanvas.height = videoElement.videoHeight || 480;
+        const width = videoElement.videoWidth || 640;
+        const height = videoElement.videoHeight || 480;
+        if (outputCanvas.width !== width || outputCanvas.height !== height) {
+            outputCanvas.width = width;
+            outputCanvas.height = height;
+        }
         ctx.save();
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-        if (results.poseLandmarks) {
+        if (results.poseLandmarks && typeof drawConnectors === 'function' && typeof drawLandmarks === 'function') {
             drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#00D26A', lineWidth: 3 });
             drawLandmarks(ctx, results.poseLandmarks, { color: '#FFFFFF', lineWidth: 2, radius: 4 });
         }
         ctx.restore();
     }
 
-    function isStanding(landmarks) {
-        if (!landmarks) return false;
-        const lh = landmarks[23], rh = landmarks[24], lk = landmarks[25], rk = landmarks[26];
-        if (!lh || !rh || !lk || !rk) return false;
-        const hipY = (lh.y + rh.y) / 2;
-        const kneeY = (lk.y + rk.y) / 2;
-        return Math.abs(hipY - kneeY) > 0.15;
+    function isVisible(point) {
+        return Boolean(point && Number.isFinite(point.x) && Number.isFinite(point.y) && (point.visibility ?? 1) >= POSE_CONFIG.minVisibility);
     }
 
-    function hasMovement(landmarks) {
-        if (!landmarks || !lastLandmarks) { lastLandmarks = landmarks; return false; }
-        let total = 0;
-        [11, 12, 13, 14, 15, 16, 23, 24, 25, 26].forEach(i => {
-            if (landmarks[i] && lastLandmarks[i]) {
-                total += Math.hypot(landmarks[i].x - lastLandmarks[i].x, landmarks[i].y - lastLandmarks[i].y);
-            }
+    function hasVisiblePoints(landmarks, indexes) {
+        return indexes.every(index => isVisible(landmarks[index]));
+    }
+
+    function midpoint(a, b) {
+        return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    }
+
+    function jointAngle(a, b, c) {
+        const ab = { x: a.x - b.x, y: a.y - b.y };
+        const cb = { x: c.x - b.x, y: c.y - b.y };
+        const denominator = Math.hypot(ab.x, ab.y) * Math.hypot(cb.x, cb.y);
+        if (!denominator) return 0;
+        const cosine = Math.max(-1, Math.min(1, (ab.x * cb.x + ab.y * cb.y) / denominator));
+        return Math.acos(cosine) * 180 / Math.PI;
+    }
+
+    function classifyStanding(landmarks) {
+        const leftAngle = jointAngle(landmarks[23], landmarks[25], landmarks[27]);
+        const rightAngle = jointAngle(landmarks[24], landmarks[26], landmarks[28]);
+        const kneeAngle = (leftAngle + rightAngle) / 2;
+        const shoulderCenter = midpoint(landmarks[11], landmarks[12]);
+        const hipCenter = midpoint(landmarks[23], landmarks[24]);
+        const ankleCenter = midpoint(landmarks[27], landmarks[28]);
+        const torsoLength = Math.max(Math.hypot(shoulderCenter.x - hipCenter.x, shoulderCenter.y - hipCenter.y), 0.05);
+        const legExtension = Math.abs(ankleCenter.y - hipCenter.y) / torsoLength;
+        return kneeAngle >= POSE_CONFIG.standingAngle && legExtension >= 1.25;
+    }
+
+    function normalizeMovementPose(landmarks) {
+        const center = midpoint(landmarks[23], landmarks[24]);
+        const shoulderCenter = midpoint(landmarks[11], landmarks[12]);
+        const scale = Math.max(Math.hypot(shoulderCenter.x - center.x, shoulderCenter.y - center.y), 0.05);
+        const indexes = [11, 12, 13, 14, 15, 16, 25, 26, 27, 28];
+        return indexes
+            .filter(index => isVisible(landmarks[index]))
+            .map(index => ({ index, x: (landmarks[index].x - center.x) / scale, y: (landmarks[index].y - center.y) / scale }));
+    }
+
+    function movementScore(current, previous) {
+        if (!current || !previous) return 0;
+        const previousByIndex = new Map(previous.map(point => [point.index, point]));
+        const distances = current.flatMap(point => {
+            const before = previousByIndex.get(point.index);
+            return before ? [Math.hypot(point.x - before.x, point.y - before.y)] : [];
         });
-        lastLandmarks = landmarks;
-        return total > 0.04;
+        return distances.length ? distances.reduce((sum, value) => sum + value, 0) / distances.length : 0;
+    }
+
+    function detectMovementEvidence(landmarks, now) {
+        const normalized = normalizeMovementPose(landmarks);
+        const score = movementScore(normalized, lastNormalizedPose);
+        lastNormalizedPose = normalized;
+        movementSamples.push({ time: now, score });
+        movementSamples = movementSamples.filter(sample => now - sample.time <= POSE_CONFIG.movementWindowMs);
+        if (movementSamples.length < 4) return false;
+        const activeSamples = movementSamples.filter(sample => sample.score >= POSE_CONFIG.movementThreshold).length;
+        const activeRatio = activeSamples / movementSamples.length;
+        const averageScore = movementSamples.reduce((sum, sample) => sum + sample.score, 0) / movementSamples.length;
+        return activeRatio >= POSE_CONFIG.movementRatio && averageScore >= POSE_CONFIG.movementThreshold * 0.55;
+    }
+
+    function resetPoseTracking() {
+        standingCandidateSince = 0;
+        activityProgressMs = 0;
+        movementSamples = [];
+        lastNormalizedPose = null;
+        lastPoseResultAt = 0;
+    }
+
+    function updateCamStatus(state, title, hint, tone = 'inactive', progress = 0) {
+        poseState = state;
+        camStatus.dataset.poseState = state;
+        detectionStatus.textContent = title;
+        detectionHint.textContent = hint;
+        camStatus.className = `cam-status ${tone}`;
+        camProgressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+    }
+
+    function completeDetectedActivity() {
+        if (timerState === 'break' && !activityAwardedForBreak) {
+            activityAwardedForBreak = true;
+            todayMinutes += 1;
+            todayMinutesEl.textContent = todayMinutes;
+            saveDailyStats();
+            breathingOverlay.classList.remove('active');
+            heroLabel.textContent = '活动完成';
+        }
     }
 
     function onResults(results) {
+        const now = performance.now();
+        const deltaMs = lastPoseResultAt ? Math.min(now - lastPoseResultAt, 250) : 0;
+        lastPoseResultAt = now;
         drawPose(results);
-        if (!results.poseLandmarks) {
-            updateCamStatus('未检测到人体', false);
+        const landmarks = results.poseLandmarks;
+        const coreVisible = landmarks && hasVisiblePoints(landmarks, [11, 12, 23, 24]);
+        if (!coreVisible) {
+            if (!missingSince) missingSince = now;
+            if (now - missingSince >= POSE_CONFIG.lostPersonMs) {
+                resetPoseTracking();
+                updateCamStatus('no-person', '未检测到人体', '站到镜头前，并让全身进入画面', 'inactive', 0);
+            }
             return;
         }
-        const standing = isStanding(results.poseLandmarks);
-        const moving = hasMovement(results.poseLandmarks);
-        if (standing) { activityFrames++; stationaryFrames = 0; if (activityFrames > 5) isStanding = true; }
-        else { stationaryFrames++; activityFrames = 0; if (stationaryFrames > 10) isStanding = false; }
-        if (moving) movementFrames = 12; else if (movementFrames > 0) movementFrames--;
-        isMoving = movementFrames > 0;
-        updateUI();
-    }
+        missingSince = 0;
 
-    function updateUI() {
-        if (isStanding && isMoving) {
-            updateCamStatus('站立活动检测到', true);
-            if (timerState === 'break') breathingOverlay.classList.remove('active');
-        } else if (isStanding) {
-            updateCamStatus('已站立，请活动身体', true);
+        if (!hasVisiblePoints(landmarks, [25, 26, 27, 28])) {
+            resetPoseTracking();
+            updateCamStatus('partial', '请完整入镜', '后退一点，确保膝盖和脚踝都在画面中', 'warning', 0);
+            return;
+        }
+
+        const standing = classifyStanding(landmarks);
+        if (!standing) {
+            standingCandidateSince = 0;
+            activityProgressMs = Math.max(0, activityProgressMs - deltaMs * 1.5);
+            movementSamples = [];
+            lastNormalizedPose = null;
+            updateCamStatus('sitting', '检测到坐姿', '请站起来，并保持身体完整入镜', 'inactive', 0);
+            return;
+        }
+
+        if (!standingCandidateSince) standingCandidateSince = now;
+        const standingElapsed = now - standingCandidateSince;
+        if (standingElapsed < POSE_CONFIG.standingConfirmMs) {
+            updateCamStatus('standing-confirm', '正在确认站立', '保持站直，不要离开画面', 'warning', standingElapsed / POSE_CONFIG.standingConfirmMs * 100);
+            return;
+        }
+
+        const moving = detectMovementEvidence(landmarks, now);
+        activityProgressMs = moving
+            ? Math.min(POSE_CONFIG.activityGoalMs, activityProgressMs + deltaMs)
+            : Math.max(0, activityProgressMs - deltaMs * 0.45);
+        const activityProgress = activityProgressMs / POSE_CONFIG.activityGoalMs * 100;
+
+        if (activityProgressMs >= POSE_CONFIG.activityGoalMs) {
+            updateCamStatus('complete', '活动完成', '做得很好，已经完成一次身体活动', 'complete', 100);
+            completeDetectedActivity();
+        } else if (activityProgressMs > 0) {
+            const secondsLeft = Math.max(1, Math.ceil((POSE_CONFIG.activityGoalMs - activityProgressMs) / 1000));
+            updateCamStatus('moving', '正在记录活动', `继续活动手臂或腿部，还需约 ${secondsLeft} 秒`, 'active', activityProgress);
         } else {
-            updateCamStatus('检测到久坐，请起身', false);
+            updateCamStatus('standing', '站立已确认', '开始活动手臂或腿部，持续约 5 秒', 'active', 0);
         }
     }
 
-    function updateCamStatus(text, active) {
-        if (text === lastStatusText) return;
-        lastStatusText = text;
-        detectionStatus.textContent = text;
-        camStatus.className = active ? 'cam-status' : 'cam-status inactive';
+    function stopCamera() {
+        isCameraActive = false;
+        const stream = videoElement.srcObject;
+        if (stream) stream.getTracks().forEach(track => track.stop());
+        videoElement.srcObject = null;
+        videoElement.onloadeddata = null;
+        camOverlay.style.display = 'flex';
+        cameraStopBtn.classList.remove('visible');
+        if (pose && typeof pose.close === 'function') {
+            const closeResult = pose.close();
+            if (closeResult && typeof closeResult.catch === 'function') closeResult.catch(() => {});
+        }
+        pose = null;
+        isPoseProcessing = false;
+        missingSince = 0;
+        resetPoseTracking();
+        updateCamStatus('idle', '等待开启', '开启后请确保全身进入画面', 'inactive', 0);
     }
 
     toggleCameraBtn.addEventListener('click', async () => {
-        if (isCameraActive) {
-            const s = videoElement.srcObject;
-            if (s) s.getTracks().forEach(t => t.stop());
-            videoElement.srcObject = null;
-            camOverlay.style.display = 'flex';
-            toggleCameraBtn.textContent = '开启摄像头';
-            isCameraActive = false;
-            lastStatusText = '';
-            updateCamStatus('等待开启', false);
-            return;
-        }
+        let stream = null;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            if (!navigator.mediaDevices?.getUserMedia) throw new Error('当前浏览器不支持摄像头访问');
+            if (typeof Pose === 'undefined') throw new Error('姿态检测组件加载失败，请检查网络连接');
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: { ideal: 960 }, height: { ideal: 720 }, facingMode: 'user' }
+            });
             videoElement.srcObject = stream;
             pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
             pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
             pose.onResults(onResults);
             camOverlay.style.display = 'none';
-            updateCamStatus('初始化姿态检测', true);
-            toggleCameraBtn.textContent = '关闭摄像头';
+            cameraStopBtn.classList.add('visible');
+            resetPoseTracking();
+            missingSince = 0;
+            consecutivePoseErrors = 0;
+            updateCamStatus('initializing', '正在初始化检测', '请后退，让肩、髋、膝和脚踝都进入画面', 'warning', 0);
             isCameraActive = true;
-            videoElement.onloadeddata = () => detectPose();
+            videoElement.onloadeddata = () => requestAnimationFrame(detectPose);
         } catch (err) {
-            alert('无法访问摄像头，请检查权限设置');
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            videoElement.srcObject = null;
+            alert(err.message || '无法访问摄像头，请检查权限设置');
         }
     });
+    cameraStopBtn.addEventListener('click', stopCamera);
 
-    async function detectPose() {
-        if (!isCameraActive || videoElement.readyState !== 4) return;
-        try { await pose.send({ image: videoElement }); } catch (e) {}
+    async function detectPose(frameTime = performance.now()) {
+        if (!isCameraActive) return;
+        const frameInterval = 1000 / POSE_CONFIG.maxInferenceFps;
+        if (videoElement.readyState >= 2 && pose && !isPoseProcessing && frameTime - lastInferenceAt >= frameInterval) {
+            lastInferenceAt = frameTime;
+            isPoseProcessing = true;
+            try {
+                await pose.send({ image: videoElement });
+                consecutivePoseErrors = 0;
+            } catch (error) {
+                consecutivePoseErrors++;
+                console.error('姿态检测帧处理失败：', error);
+                if (consecutivePoseErrors >= 3) {
+                    updateCamStatus('error', '检测暂时中断', '请关闭摄像头后重新开启', 'error', 0);
+                }
+            } finally {
+                isPoseProcessing = false;
+            }
+        }
         requestAnimationFrame(detectPose);
     }
 
@@ -1207,17 +1685,34 @@
         exerciseDescription.textContent = e.desc;
     }
 
-    startExerciseBtn.addEventListener('click', () => {
+    function startExercise() {
         if (exerciseState === 'idle') {
             exerciseState = 'running';
             exerciseTimeLeft = 30;
+            exerciseCountdown.textContent = exerciseTimeLeft;
+            exerciseProgressBar.style.width = '0%';
+            startExerciseBtn.textContent = '进行中';
+            startExerciseBtn.disabled = true;
+            completeExerciseBtn.disabled = false;
             exerciseInterval = setInterval(() => {
                 exerciseTimeLeft--;
                 exerciseCountdown.textContent = exerciseTimeLeft;
                 exerciseProgressBar.style.width = ((30 - exerciseTimeLeft) / 30 * 100) + '%';
-                if (exerciseTimeLeft <= 0) { switchExercise(); exerciseTimeLeft = 30; }
+                if (exerciseTimeLeft <= 0) {
+                    switchExercise();
+                    exerciseTimeLeft = 30;
+                    exerciseCountdown.textContent = exerciseTimeLeft;
+                    exerciseProgressBar.style.width = '0%';
+                }
             }, 1000);
         }
+    }
+
+    startExerciseBtn.addEventListener('click', startExercise);
+    startBreakExerciseBtn.addEventListener('click', () => {
+        breathingOverlay.classList.remove('active');
+        document.querySelector('.tile-exercise').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        startExercise();
     });
 
     completeExerciseBtn.addEventListener('click', () => {
@@ -1226,15 +1721,22 @@
             exerciseState = 'idle';
             exerciseTimeLeft = 30;
             exerciseCountdown.textContent = 30;
-            exerciseProgressBar.style.width = '60%';
+            exerciseProgressBar.style.width = '0%';
+            startExerciseBtn.textContent = '开始';
+            startExerciseBtn.disabled = false;
+            completeExerciseBtn.disabled = true;
             todayMinutes += 5;
             todayMinutesEl.textContent = todayMinutes;
+            saveDailyStats();
             breathingOverlay.classList.remove('active');
             resetTimer();
         }
     });
 
+    loadDailyStats();
     updateTimer();
+    setTimerButton('play');
+    todayDateEl.textContent = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short' }).format(new Date());
     todayPomodorosEl.textContent = todayPomodoros;
     todayMinutesEl.textContent = todayMinutes;
     todayStreakEl.textContent = todayStreak;
