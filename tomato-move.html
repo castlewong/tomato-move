@@ -1015,8 +1015,6 @@
     const startBtn = document.getElementById('startBtn');
     const resetBtn = document.getElementById('resetBtn');
     const finishBtn = document.getElementById('finishBtn');
-    const heroStartBtn = document.getElementById('heroStartBtn');
-    const heroWatchBtn = document.getElementById('heroWatchBtn');
     const navStartBtn = document.getElementById('navStartBtn');
     const breathingOverlay = document.getElementById('breathingOverlay');
 
@@ -1098,9 +1096,7 @@
     startBtn.addEventListener('click', startTimer);
     resetBtn.addEventListener('click', resetTimer);
     finishBtn.addEventListener('click', finishPomo);
-    heroStartBtn.addEventListener('click', startTimer);
-    navStartBtn.addEventListener('click', () => document.querySelector('.hero-visual').scrollIntoView({ behavior: 'smooth' }));
-    heroWatchBtn.addEventListener('click', () => document.getElementById('method').scrollIntoView({ behavior: 'smooth' }));
+    navStartBtn.addEventListener('click', () => document.getElementById('method').scrollIntoView({ behavior: 'smooth' }));
 
     function drawPose(results) {
         const ctx = outputCanvas.getContext('2d');
