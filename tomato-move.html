@@ -3,1141 +3,1191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>动动番茄钟 - 专注工作，也要动起来</title>
+    <title>Pomo — 专注，也动起来</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
-
         :root {
-            --primary: #FF6B6B;
-            --primary-light: #FF8E8E;
-            --secondary: #4ECDC4;
-            --secondary-light: #7EDDD6;
-            --accent: #FFE66D;
-            --dark: #1A1A2E;
-            --dark-light: #16213E;
-            --card: #FFFFFF;
-            --text-primary: #2D3436;
-            --text-secondary: #636E72;
-            --bg-gradient-start: #667eea;
-            --bg-gradient-end: #764ba2;
-            --shadow: 0 10px 40px rgba(0,0,0,0.15);
-            --shadow-hover: 0 20px 50px rgba(0,0,0,0.2);
-            --radius: 24px;
-            --radius-sm: 12px;
-            --radius-lg: 32px;
-            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            --ink: #0A0A0B;
+            --ink-soft: #4A4A52;
+            --ink-mute: #8A8A92;
+            --line: rgba(10, 10, 11, 0.08);
+            --line-soft: rgba(10, 10, 11, 0.05);
+            --surface: #FAFAF7;
+            --surface-2: #F2F2EC;
+            --paper: #FFFFFF;
+            --accent: #FF5A36;
+            --accent-soft: #FFE8E0;
+            --moss: #2E6B4F;
+            --sky: #4F7CAC;
+            --radius-card: 28px;
+            --radius-control: 999px;
+            --radius-sm: 14px;
+            --shadow-1: 0 1px 2px rgba(10,10,11,0.04), 0 8px 24px rgba(10,10,11,0.06);
+            --shadow-2: 0 1px 2px rgba(10,10,11,0.04), 0 16px 40px rgba(10,10,11,0.08);
+            --font-sans: "SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Inter", sans-serif;
+            --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, monospace;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Noto Sans SC', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: var(--font-sans);
+            background: var(--surface);
+            color: var(--ink);
             min-height: 100vh;
-            overflow-x: hidden;
-            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: -0.01em;
         }
 
+        /* Top Nav */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(250, 250, 247, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid var(--line-soft);
+        }
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 17px;
+            letter-spacing: -0.02em;
+        }
+        .brand-mark {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--ink);
+            display: grid;
+            place-items: center;
+            color: var(--paper);
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            font-size: 14px;
+            color: var(--ink-soft);
+        }
+        .nav-links a {
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--ink); }
+        .nav-cta {
+            padding: 8px 16px;
+            background: var(--ink);
+            color: var(--paper);
+            border-radius: var(--radius-control);
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.2s;
+        }
+        .nav-cta:hover { transform: translateY(-1px); }
+        .nav-cta:active { transform: translateY(0); }
+
+        /* Container */
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 24px;
+            padding: 0 32px;
         }
 
-        header {
-            text-align: center;
-            padding: 60px 20px 40px;
-            animation: fadeInDown 0.8s ease-out;
-        }
-
-        header h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 12px;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            letter-spacing: -0.5px;
-        }
-
-        header p {
-            font-size: 1.125rem;
-            color: rgba(255,255,255,0.9);
-            font-weight: 300;
-        }
-
-        .main-content {
+        /* Hero */
+        .hero {
+            padding: 80px 0 60px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 28px;
-            margin-bottom: 40px;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 64px;
+            align-items: center;
         }
-
-        .card {
-            background: var(--card);
-            border-radius: var(--radius);
-            padding: 32px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            animation: fadeInUp 0.6s ease-out forwards;
-            opacity: 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .card:hover::before {
-            opacity: 1;
-        }
-
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
-        .card:nth-child(4) { animation-delay: 0.4s; }
-
-        .card-title {
-            font-size: 1.375rem;
-            font-weight: 600;
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            border-radius: var(--radius-control);
+            font-size: 13px;
+            font-weight: 500;
             margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: var(--text-primary);
         }
-
-        .card-title-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-sm);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            flex-shrink: 0;
-        }
-
-        .timer-section {
-            grid-column: 1 / -1;
-            background: linear-gradient(160deg, #FF6B6B 0%, #FF8E53 100%);
-            color: white;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .timer-section::before {
+        .hero-eyebrow::before {
             content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255,255,255,0.1);
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
             border-radius: 50%;
-            filter: blur(40px);
+            animation: pulse-dot 2s infinite;
         }
-
-        .timer-section::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 200px;
-            height: 200px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 50%;
-            filter: blur(30px);
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
         }
-
-        .timer-section .card-title {
-            color: white;
-            position: relative;
-            z-index: 1;
-        }
-
-        .timer-section .card-title-icon {
-            background: rgba(255,255,255,0.25);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        .progress-ring {
-            position: relative;
-            width: 280px;
-            height: 280px;
-            margin: 0 auto 32px;
-            z-index: 1;
-        }
-
-        .progress-ring svg {
-            transform: rotate(-90deg);
-        }
-
-        .progress-ring-circle {
-            fill: none;
-            stroke-width: 12;
-            stroke-linecap: round;
-        }
-
-        .progress-ring-circle.bg {
-            stroke: rgba(255,255,255,0.3);
-        }
-
-        .progress-ring-circle.fg {
-            stroke: white;
-            transition: stroke-dashoffset 1s linear;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-        }
-
-        .progress-ring-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-
-        .progress-ring-time {
-            font-size: 3.5rem;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-
-        .progress-ring-label {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin-top: 8px;
-            font-weight: 300;
-        }
-
-        .timer-controls {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn {
-            padding: 14px 32px;
-            font-size: 1rem;
+        .hero h1 {
+            font-size: clamp(40px, 5.5vw, 72px);
+            line-height: 1.02;
             font-weight: 600;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: var(--transition);
-            letter-spacing: 0.5px;
-            font-family: 'Noto Sans SC', sans-serif;
+            letter-spacing: -0.035em;
+            color: var(--ink);
+            margin-bottom: 24px;
+        }
+        .hero h1 .accent-word {
+            font-style: italic;
+            font-weight: 500;
+            color: var(--accent);
+        }
+        .hero-sub {
+            font-size: 19px;
+            line-height: 1.5;
+            color: var(--ink-soft);
+            max-width: 480px;
+            margin-bottom: 36px;
+        }
+        .hero-actions {
             display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .btn {
+            padding: 14px 24px;
+            border-radius: var(--radius-control);
+            font-size: 15px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
         }
-
         .btn-primary {
-            background: white;
-            color: var(--primary);
-            box-shadow: 0 6px 20px rgba(255,255,255,0.3);
+            background: var(--ink);
+            color: var(--paper);
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(255,255,255,0.4);
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(10,10,11,0.15); }
+        .btn-ghost {
+            background: transparent;
+            color: var(--ink);
+            padding: 14px 16px;
         }
+        .btn-ghost:hover { color: var(--accent); }
 
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 2px solid rgba(255,255,255,0.4);
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.3);
-            border-color: rgba(255,255,255,0.6);
-        }
-
-        .btn-success {
-            background: var(--secondary);
-            color: white;
-            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.4);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(78, 205, 196, 0.5);
-        }
-
-        .camera-preview {
-            width: 100%;
-            height: 280px;
-            background: var(--dark);
-            border-radius: var(--radius-sm);
+        /* Hero Visual: Tomato Timer */
+        .hero-visual {
             position: relative;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #FF8060 0%, #FF5A36 50%, #E84A28 100%);
+            border-radius: 40px;
+            display: grid;
+            place-items: center;
+            box-shadow: 0 30px 80px rgba(255, 90, 54, 0.25), 0 10px 30px rgba(10,10,11,0.1);
             overflow: hidden;
+        }
+        .hero-visual::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            right: -20%;
+            width: 60%;
+            height: 60%;
+            background: rgba(255,255,255,0.25);
+            border-radius: 50%;
+            filter: blur(40px);
+        }
+        .timer-ring {
+            position: relative;
+            width: 76%;
+            aspect-ratio: 1;
+        }
+        .timer-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .timer-ring circle { fill: none; stroke-width: 2.5; }
+        .ring-bg { stroke: rgba(255,255,255,0.25); }
+        .ring-fg {
+            stroke: white;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+            filter: drop-shadow(0 0 8px rgba(255,255,255,0.5));
+        }
+        .timer-center {
+            position: absolute;
+            inset: 0;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            color: white;
+        }
+        .timer-time {
+            font-size: clamp(48px, 6vw, 76px);
+            font-weight: 300;
+            letter-spacing: -0.04em;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+        }
+        .timer-label {
+            margin-top: 12px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            opacity: 0.85;
+            font-weight: 500;
+        }
+        .hero-controls {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 2;
+        }
+        .hero-controls .ctrl {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .hero-controls .ctrl:hover {
+            background: rgba(255,255,255,0.35);
+            transform: translateY(-2px);
+        }
+        .hero-controls .ctrl.primary {
+            width: 56px;
+            height: 56px;
+            background: white;
+            color: var(--accent);
         }
 
-        .camera-preview video,
-        .camera-preview canvas {
+        /* Section base */
+        section {
+            padding: 80px 0;
+        }
+        .section-head {
+            max-width: 640px;
+            margin-bottom: 56px;
+        }
+        .section-head h2 {
+            font-size: clamp(32px, 4vw, 48px);
+            line-height: 1.05;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            color: var(--ink);
+            margin-bottom: 16px;
+        }
+        .section-head p {
+            font-size: 18px;
+            line-height: 1.5;
+            color: var(--ink-soft);
+        }
+
+        /* Bento Grid */
+        .bento {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-auto-rows: minmax(180px, auto);
+            gap: 16px;
+        }
+        .tile {
+            background: var(--paper);
+            border-radius: var(--radius-card);
+            padding: 28px;
+            border: 1px solid var(--line-soft);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+
+        .tile-cam { grid-column: span 4; grid-row: span 2; background: var(--ink); color: var(--paper); border: none; }
+        .tile-cam:hover { transform: none; }
+        .tile-stats { grid-column: span 2; grid-row: span 1; }
+        .tile-streak { grid-column: span 2; grid-row: span 1; }
+        .tile-exercise { grid-column: span 3; grid-row: span 2; background: var(--moss); color: var(--paper); border: none; }
+        .tile-exercise:hover { transform: none; }
+        .tile-ai { grid-column: span 3; grid-row: span 2; }
+
+        .tile-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink-mute);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        .tile-cam .tile-label, .tile-exercise .tile-label { color: rgba(255,255,255,0.7); }
+        .tile-cam .tile-label::before, .tile-exercise .tile-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #00D26A;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #00D26A;
+            animation: pulse-dot 1.5s infinite;
+        }
+        .tile-cam .tile-label::before { background: #FF3B30; box-shadow: 0 0 8px #FF3B30; }
+
+        /* Camera tile */
+        .cam-stage {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 40px);
+            background: #1A1A1E;
+            border-radius: 18px;
+            overflow: hidden;
+        }
+        .cam-stage video, .cam-stage canvas {
             position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-
-        .camera-overlay {
+        .cam-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.6);
+            inset: 0;
+            background: rgba(0,0,0,0.7);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 20px;
-            z-index: 10;
-        }
-
-        .camera-overlay div {
-            color: white;
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        .detection-status {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: var(--radius-sm);
-            text-align: center;
-            font-weight: 600;
-            transition: var(--transition);
-            font-size: 0.95rem;
-        }
-
-        .detection-active {
-            background: rgba(0, 184, 148, 0.1);
-            color: #00B894;
-            border: 1px solid rgba(0, 184, 148, 0.2);
-        }
-
-        .detection-inactive {
-            background: rgba(255, 107, 107, 0.1);
-            color: #FF6B6B;
-            border: 1px solid rgba(255, 107, 107, 0.2);
-        }
-
-        .exercise-guide {
-            grid-column: 1 / -1;
-            background: linear-gradient(160deg, #4ECDC4 0%, #44A08D 100%);
-            color: white;
-        }
-
-        .exercise-guide .card-title {
-            color: white;
-        }
-
-        .exercise-guide .card-title-icon {
-            background: rgba(255,255,255,0.25);
-            backdrop-filter: blur(10px);
-        }
-
-        .exercise-content {
-            display: flex;
-            align-items: center;
-            gap: 40px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .exercise-image {
-            width: 160px;
-            height: 160px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
-            animation: pulse 3s ease-in-out infinite;
-            flex-shrink: 0;
-        }
-
-        .exercise-info {
-            flex: 1;
-            min-width: 280px;
-        }
-
-        .exercise-name {
-            font-size: 1.75rem;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .exercise-description {
-            font-size: 1rem;
-            opacity: 0.9;
-            line-height: 1.7;
-            margin-bottom: 20px;
-            font-weight: 300;
-        }
-
-        .exercise-countdown {
-            font-size: 3rem;
-            font-weight: 700;
-            text-align: center;
-            animation: countPulse 1s ease-in-out infinite;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
-            margin-top: 24px;
+            color: white;
+            z-index: 5;
         }
-
-        .stat-item {
-            background: var(--dark-light);
-            padding: 24px 16px;
-            border-radius: var(--radius-sm);
-            text-align: center;
-            transition: var(--transition);
-        }
-
-        .stat-item:hover {
-            transform: scale(1.02);
-            background: var(--dark);
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
+        .cam-overlay-text {
+            font-size: 14px;
             color: rgba(255,255,255,0.7);
-            margin-top: 4px;
-            font-weight: 300;
         }
-
-        .features-section {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 24px;
-        }
-
-        .feature-card {
+        .cam-btn {
+            padding: 10px 20px;
             background: white;
-            border-radius: var(--radius);
-            padding: 28px;
-            box-shadow: var(--shadow);
-            transition: var(--transition);
+            color: var(--ink);
+            border: none;
+            border-radius: var(--radius-control);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.15s;
+        }
+        .cam-btn:hover { transform: scale(1.05); }
+        .cam-status {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            right: 16px;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 5;
+        }
+        .cam-status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--moss);
+        }
+        .cam-status.inactive::before { background: var(--accent); }
+
+        /* Stats tile */
+        .stat-big {
+            font-size: 56px;
+            font-weight: 500;
+            letter-spacing: -0.04em;
+            color: var(--ink);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: var(--ink-mute);
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 500;
+        }
+        .stat-delta {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 13px;
+            color: var(--moss);
+            font-weight: 500;
+            margin-top: 12px;
+        }
+
+        /* Streak tile */
+        .streak-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 12px;
+        }
+        .streak-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--surface-2);
+        }
+        .streak-dot.active { background: var(--accent); }
+        .streak-count {
+            font-size: 56px;
+            font-weight: 500;
+            letter-spacing: -0.04em;
+            color: var(--ink);
+            line-height: 1;
+        }
+
+        /* Exercise tile */
+        .exercise-stage {
             position: relative;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            height: calc(100% - 40px);
+        }
+        .exercise-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            display: grid;
+            place-items: center;
+            font-size: 56px;
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .exercise-text {
+            flex: 1;
+        }
+        .exercise-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        .exercise-desc {
+            font-size: 14px;
+            line-height: 1.5;
+            opacity: 0.85;
+            margin-bottom: 20px;
+        }
+        .exercise-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
             overflow: hidden;
         }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-hover);
+        .progress-fill {
+            height: 100%;
+            background: white;
+            width: 60%;
+            border-radius: 2px;
+            transition: width 0.5s;
+        }
+        .progress-num {
+            font-size: 20px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+        .exercise-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .ex-btn {
+            padding: 8px 16px;
+            background: white;
+            color: var(--moss);
+            border: none;
+            border-radius: var(--radius-control);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .ex-btn.alt {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
         }
 
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 16px;
-            display: block;
+        /* AI Insight tile */
+        .insight-quote {
+            font-size: 19px;
+            line-height: 1.45;
+            color: var(--ink);
+            margin-top: 8px;
+            font-weight: 400;
+            letter-spacing: -0.01em;
+        }
+        .insight-quote::before {
+            content: '“';
+            font-size: 32px;
+            color: var(--accent);
+            font-family: Georgia, serif;
+            line-height: 0;
+            margin-right: 4px;
+            vertical-align: -8px;
+        }
+        .insight-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--line-soft);
+        }
+        .insight-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF8060, #FF5A36);
+        }
+        .insight-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--ink);
+        }
+        .insight-role {
+            font-size: 12px;
+            color: var(--ink-mute);
         }
 
-        .feature-title {
-            font-size: 1.25rem;
+        /* Principles */
+        .principles {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 48px;
+        }
+        .principle-num {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--ink-mute);
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+        }
+        .principle-title {
+            font-size: 20px;
             font-weight: 600;
+            color: var(--ink);
             margin-bottom: 12px;
-            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .principle-text {
+            font-size: 15px;
+            line-height: 1.55;
+            color: var(--ink-soft);
         }
 
-        .feature-description {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            line-height: 1.7;
-            font-weight: 300;
+        /* Stats row */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            padding: 56px 0;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+        .strip-num {
+            font-size: 48px;
+            font-weight: 500;
+            letter-spacing: -0.03em;
+            color: var(--ink);
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+        .strip-label {
+            font-size: 14px;
+            color: var(--ink-soft);
+            margin-top: 12px;
+            line-height: 1.4;
         }
 
-        .breathing-effect {
+        /* Footer */
+        footer {
+            padding: 60px 0 40px;
+            border-top: 1px solid var(--line-soft);
+        }
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--ink-mute);
+            font-size: 14px;
+        }
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+        .footer-links a {
+            color: var(--ink-soft);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--ink); }
+
+        /* Breathing overlay */
+        .breathing-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(78, 205, 196, 0.95), rgba(68, 160, 141, 0.95));
+            inset: 0;
             z-index: 1000;
+            background: rgba(46, 107, 79, 0.96);
+            backdrop-filter: blur(20px);
             display: none;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            animation: breathe 4s ease-in-out infinite;
+            flex-direction: column;
+            gap: 40px;
         }
-
-        .breathing-effect.active {
-            display: flex;
-        }
-
-        .breathing-content {
-            text-align: center;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .breathing-text {
-            font-size: 2.5rem;
-            color: white;
-            font-weight: 700;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            margin-bottom: 16px;
-            animation: bounceIn 1s ease-out;
-        }
-
-        .breathing-subtext {
-            font-size: 1.25rem;
-            color: rgba(255,255,255,0.9);
-            font-weight: 300;
-        }
-
-        .breathing-animation {
+        .breathing-overlay.active { display: flex; }
+        .breath-circle {
             width: 200px;
             height: 200px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            margin-bottom: 32px;
-            animation: breathingCircle 4s ease-in-out infinite;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.4);
+            animation: breathe 5s ease-in-out infinite;
         }
-
-        footer {
-            text-align: center;
-            color: white;
-            padding: 40px 20px 20px;
-            opacity: 0.8;
-            font-weight: 300;
-        }
-
-        footer p {
-            margin-bottom: 8px;
-        }
-
-        footer .copyright {
-            font-size: 0.85rem;
-            opacity: 0.6;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes countPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-        }
-
         @keyframes breathe {
-            0%, 100% { opacity: 0.9; }
-            50% { opacity: 1; }
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.4); opacity: 1; }
+        }
+        .breath-text {
+            color: white;
+            text-align: center;
+        }
+        .breath-title {
+            font-size: 32px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+        .breath-sub {
+            font-size: 16px;
+            opacity: 0.8;
         }
 
-        @keyframes breathingCircle {
-            0%, 100% { transform: scale(1); opacity: 0.3; }
-            50% { transform: scale(1.3); opacity: 0.6; }
-        }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            70% { transform: scale(1.1); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
+        @media (max-width: 968px) {
+            .hero { grid-template-columns: 1fr; padding: 48px 0; gap: 40px; }
+            .hero-visual { max-width: 480px; margin: 0 auto; width: 100%; }
+            .bento { grid-template-columns: 1fr; }
+            .tile-cam, .tile-stats, .tile-streak, .tile-exercise, .tile-ai {
+                grid-column: span 1; grid-row: span 1;
             }
-
-            .features-section {
-                grid-template-columns: 1fr;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
-
-            header p {
-                font-size: 1rem;
-            }
-
-            .progress-ring {
-                width: 220px;
-                height: 220px;
-            }
-
-            .progress-ring-time {
-                font-size: 2.5rem;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .exercise-content {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .exercise-image {
-                width: 120px;
-                height: 120px;
-                font-size: 3rem;
-            }
-
-            .exercise-name {
-                font-size: 1.5rem;
-            }
-
-            .breathing-text {
-                font-size: 1.75rem;
-            }
-
-            .btn {
-                padding: 12px 24px;
-                font-size: 0.9rem;
-            }
+            .principles { grid-template-columns: 1fr; gap: 32px; }
+            .stats-strip { grid-template-columns: repeat(2, 1fr); gap: 24px; }
+            .nav-links { display: none; }
+            section { padding: 60px 0; }
         }
     </style>
 </head>
 <body>
-    <div class="breathing-effect" id="breathingOverlay">
-        <div class="breathing-animation"></div>
-        <div class="breathing-content">
-            <div class="breathing-text">站起来活动一下！</div>
-            <div class="breathing-subtext">你的身体需要你</div>
+
+<nav class="nav">
+    <div class="nav-inner">
+        <div class="brand">
+            <div class="brand-mark">P</div>
+            Pomo
+        </div>
+        <div class="nav-links">
+            <a href="#method">方法</a>
+            <a href="#science">科学</a>
+            <a href="#method">用户故事</a>
+            <a href="#method">下载</a>
+        </div>
+        <button class="nav-cta" id="navStartBtn">开始使用</button>
+    </div>
+</nav>
+
+<main class="container">
+
+<section class="hero">
+    <div>
+        <div class="hero-eyebrow">v1.2 · 全新姿态检测上线</div>
+        <h1>专注 25 分钟<br>然后，<span class="accent-word">真正</span>站起来</h1>
+        <p class="hero-sub">普通番茄钟只提醒你休息。Pomo 用摄像头检测你的姿态，确保你真的起身活动了，而不是又刷起手机。</p>
+        <div class="hero-actions">
+            <button class="btn btn-primary" id="heroStartBtn">开启第一个番茄 →</button>
+            <button class="btn btn-ghost" id="heroWatchBtn">看演示</button>
         </div>
     </div>
+    <div class="hero-visual">
+        <div class="timer-ring">
+            <svg viewBox="0 0 200 200">
+                <circle class="ring-bg" cx="100" cy="100" r="96"></circle>
+                <circle class="ring-fg" id="heroRing" cx="100" cy="100" r="96" stroke-dasharray="603" stroke-dashoffset="0"></circle>
+            </svg>
+            <div class="timer-center">
+                <div class="timer-time" id="heroTime">25:00</div>
+                <div class="timer-label" id="heroLabel">准备开始</div>
+            </div>
+        </div>
+        <div class="hero-controls">
+            <button class="ctrl" id="resetBtn" title="重置">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            </button>
+            <button class="ctrl primary" id="startBtn" title="开始">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="ctrl" id="finishBtn" title="完成">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </button>
+        </div>
+    </div>
+</section>
 
+<div class="stats-strip">
+    <div>
+        <div class="strip-num">3.2x</div>
+        <div class="strip-label">起身频率比<br>普通番茄钟更高</div>
+    </div>
+    <div>
+        <div class="strip-num">-47%</div>
+        <div class="strip-label">颈部僵硬<br>用户报告</div>
+    </div>
+    <div>
+        <div class="strip-num">12k+</div>
+        <div class="strip-label">每天完成<br>的番茄数</div>
+    </div>
+    <div>
+        <div class="strip-num">98.6%</div>
+        <div class="strip-label">用户表示<br>更专注了</div>
+    </div>
+</div>
+
+<section id="method">
+    <div class="section-head">
+        <h2>把"专注"和"活动"<br>放在同一时间轴上</h2>
+        <p>番茄钟结束的那一刻，大多数人只是换了一个屏幕。Pomo 把你的身体也纳入这个循环。</p>
+    </div>
+
+    <div class="bento">
+
+        <div class="tile tile-cam">
+            <div class="tile-label">姿态检测 · Live</div>
+            <div class="cam-stage">
+                <div class="cam-overlay" id="camOverlay">
+                    <div class="cam-overlay-text">摄像头未开启</div>
+                    <button class="cam-btn" id="toggleCameraBtn">开启摄像头</button>
+                </div>
+                <video id="videoElement" autoplay playsinline></video>
+                <canvas id="outputCanvas"></canvas>
+                <div class="cam-status inactive" id="camStatus">
+                    <span id="detectionStatus">等待开启</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tile tile-stats">
+            <div class="tile-label">今日番茄</div>
+            <div class="stat-big" id="todayPomodoros">0</div>
+            <div class="stat-delta">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+                较昨日 +2
+            </div>
+        </div>
+
+        <div class="tile tile-streak">
+            <div class="tile-label">连续天数</div>
+            <div class="streak-count" id="todayStreak">7</div>
+            <div class="streak-row">
+                <div class="streak-dot active"></div>
+                <div class="streak-dot active"></div>
+                <div class="streak-dot active"></div>
+                <div class="streak-dot active"></div>
+                <div class="streak-dot active"></div>
+                <div class="streak-dot active"></div>
+                <div class="streak-dot active"></div>
+            </div>
+        </div>
+
+        <div class="tile tile-exercise">
+            <div class="tile-label">休息活动</div>
+            <div class="exercise-stage">
+                <div class="exercise-icon" id="exerciseImage">🧘</div>
+                <div class="exercise-text">
+                    <div class="exercise-name" id="exerciseName">颈部放松</div>
+                    <div class="exercise-desc" id="exerciseDescription">缓慢将头部向左侧倾斜，感受右侧颈部的拉伸感，保持 15 秒。</div>
+                    <div class="exercise-progress">
+                        <div class="progress-bar"><div class="progress-fill" id="exerciseProgressBar"></div></div>
+                        <div class="progress-num" id="exerciseCountdown">30</div>
+                    </div>
+                    <div class="exercise-actions">
+                        <button class="ex-btn" id="startExerciseBtn">开始</button>
+                        <button class="ex-btn alt" id="completeExerciseBtn">完成</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tile tile-ai">
+            <div class="tile-label">用户反馈</div>
+            <p class="insight-quote">用了一周后我发现自己不自觉地会更频繁地站起来。最神奇的是，我真的开始期待休息时间了。</p>
+            <div class="insight-meta">
+                <div class="insight-avatar"></div>
+                <div>
+                    <div class="insight-name">林知夏</div>
+                    <div class="insight-role">产品经理 · 北京</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<section id="science">
+    <div class="section-head">
+        <h2>身体动起来，<br>大脑才能继续高效</h2>
+        <p>这不是我们说的。是神经科学、运动医学和上千个真实工作日累积出来的结论。</p>
+    </div>
+
+    <div class="principles">
+        <div>
+            <div class="principle-num">01</div>
+            <h3 class="principle-title">久坐 45 分钟后，专注力断崖下降</h3>
+            <p class="principle-text">根据《柳叶刀》子刊研究，连续久坐超过 45 分钟，即使身体健康的人，大脑前额叶的活跃度也会显著降低。</p>
+        </div>
+        <div>
+            <div class="principle-num">02</div>
+            <h3 class="principle-title">2 分钟站立 = 23% 认知回升</h3>
+            <p class="principle-text">站立 2 分钟并配合轻度拉伸，能让脑部血流量恢复 23%。这一个番茄钟的回报，远比你刷 5 分钟手机高。</p>
+        </div>
+        <div>
+            <div class="principle-num">03</div>
+            <h3 class="principle-title">习惯需要闭环反馈</h3>
+            <p class="principle-text">单纯靠意志力提醒自己活动，平均坚持不超过 11 天。Pomo 用摄像头给你最直接的闭环：你动了，番茄才算完成。</p>
+        </div>
+    </div>
+</section>
+
+</main>
+
+<footer>
     <div class="container">
-        <header>
-            <h1>🍅 动动番茄钟</h1>
-            <p>专注工作 · 也要动起来</p>
-        </header>
-
-        <div class="main-content">
-            <div class="card timer-section">
-                <h2 class="card-title">
-                    <span class="card-title-icon">⏱️</span>
-                    专注倒计时
-                </h2>
-                
-                <div class="progress-ring">
-                    <svg width="280" height="280">
-                        <circle class="progress-ring-circle bg" cx="140" cy="140" r="130"></circle>
-                        <circle class="progress-ring-circle fg" id="progressCircle" cx="140" cy="140" r="130" stroke-dasharray="817" stroke-dashoffset="0"></circle>
-                    </svg>
-                    <div class="progress-ring-content">
-                        <div class="progress-ring-time" id="timerDisplay">25:00</div>
-                        <div class="progress-ring-label" id="timerStatus">准备开始</div>
-                    </div>
-                </div>
-
-                <div class="timer-controls">
-                    <button class="btn btn-primary" id="startBtn">▶ 开始专注</button>
-                    <button class="btn btn-secondary" id="pauseBtn">⏸ 暂停</button>
-                    <button class="btn btn-secondary" id="resetBtn">🔄 重置</button>
-                    <button class="btn btn-success" id="finishBtn">✓ 完成</button>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2 class="card-title">
-                    <span class="card-title-icon">📷</span>
-                    姿态检测
-                </h2>
-                <div class="camera-preview" id="cameraPreview">
-                    <div class="camera-overlay" id="cameraOverlay">
-                        <div>📹 摄像头预览区域</div>
-                        <button class="btn btn-primary" id="toggleCameraBtn">开启摄像头</button>
-                    </div>
-                    <video id="videoElement" autoplay playsinline></video>
-                    <canvas id="outputCanvas"></canvas>
-                </div>
-                <div class="detection-status detection-inactive" id="detectionStatus">
-                    📡 等待摄像头开启...
-                </div>
-            </div>
-
-            <div class="card">
-                <h2 class="card-title">
-                    <span class="card-title-icon">📊</span>
-                    今日数据
-                </h2>
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-value" id="todayPomodoros">0</div>
-                        <div class="stat-label">完成番茄</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="todayMinutes">0</div>
-                        <div class="stat-label">活动分钟</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="todayStreak">7</div>
-                        <div class="stat-label">连续天数</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card exercise-guide">
-                <h2 class="card-title">
-                    <span class="card-title-icon">🏋️</span>
-                    休息活动
-                </h2>
-                <div class="exercise-content">
-                    <div class="exercise-image" id="exerciseImage">🧘</div>
-                    <div class="exercise-info">
-                        <div class="exercise-name" id="exerciseName">颈部拉伸</div>
-                        <div class="exercise-description" id="exerciseDescription">
-                            缓慢将头部向左侧倾斜，感受右侧颈部的拉伸感，保持15秒。然后慢慢回到中间，再向右侧倾斜。
-                        </div>
-                        <div class="exercise-countdown" id="exerciseCountdown">30</div>
-                    </div>
-                </div>
-                <div class="timer-controls" style="margin-top: 24px;">
-                    <button class="btn btn-primary" id="startExerciseBtn">▶ 开始活动</button>
-                    <button class="btn btn-success" id="completeExerciseBtn">✓ 完成活动</button>
-                </div>
+        <div class="footer-inner">
+            <div>© 2026 Pomo · 让专注更健康</div>
+            <div class="footer-links">
+                <a href="#">隐私政策</a>
+                <a href="#">使用条款</a>
+                <a href="#">联系我们</a>
             </div>
         </div>
-
-        <div class="features-section">
-            <div class="feature-card">
-                <span class="feature-icon">🎯</span>
-                <h3 class="feature-title">智能检测</h3>
-                <p class="feature-description">通过摄像头实时监测你的姿态，当番茄钟结束时，自动检测你是否离开座位。如果检测到你仍坐着，会通过呼吸动画提醒你起身活动。</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">🏃</span>
-                <h3 class="feature-title">动作引导</h3>
-                <p class="feature-description">内置多种办公室放松动作，每个动作都有详细的文字说明和倒计时。从颈部拉伸到肩部环绕，帮助你科学地放松身体。</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">📈</span>
-                <h3 class="feature-title">数据追踪</h3>
-                <p class="feature-description">记录你每天完成的番茄数、活动时间和连续打卡天数。数据可视化让你清楚地看到自己的专注和健康状况。</p>
-            </div>
-            <div class="feature-card">
-                <span class="feature-icon">⚡</span>
-                <h3 class="feature-title">多端同步</h3>
-                <p class="feature-description">支持手机端和电脑端使用，数据云端同步。无论你在办公室还是在家，都能保持一致的专注和健康习惯。</p>
-            </div>
-        </div>
-
-        <footer>
-            <p>让专注更健康 · 让工作更高效</p>
-            <p class="copyright">动动番茄钟 - 你的健康工作伙伴</p>
-        </footer>
     </div>
+</footer>
 
-    <script>
-        let timerState = 'idle';
-        let timerInterval = null;
-        let timeLeft = 25 * 60;
-        let totalTime = 25 * 60;
-        
-        let exerciseState = 'idle';
-        let exerciseInterval = null;
-        let exerciseTimeLeft = 30;
-        
-        let todayPomodoros = 0;
-        let todayMinutes = 0;
-        let todayStreak = 7;
-        
-        let pose = null;
-        let isCameraActive = false;
-        let isStanding = false;
-        let isMoving = false;
-        let lastLandmarks = null;
-        let activityFrames = 0;
-        let stationaryFrames = 0;
-        let movementFrames = 0;
-        let lastStatusText = '';
-        
-        const timerDisplay = document.getElementById('timerDisplay');
-        const timerStatus = document.getElementById('timerStatus');
-        const progressCircle = document.getElementById('progressCircle');
-        const startBtn = document.getElementById('startBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const finishBtn = document.getElementById('finishBtn');
-        const breathingOverlay = document.getElementById('breathingOverlay');
-        
-        const videoElement = document.getElementById('videoElement');
-        const outputCanvas = document.getElementById('outputCanvas');
-        const cameraOverlay = document.getElementById('cameraOverlay');
-        const toggleCameraBtn = document.getElementById('toggleCameraBtn');
-        const detectionStatus = document.getElementById('detectionStatus');
-        
-        const exerciseImage = document.getElementById('exerciseImage');
-        const exerciseName = document.getElementById('exerciseName');
-        const exerciseDescription = document.getElementById('exerciseDescription');
-        const exerciseCountdown = document.getElementById('exerciseCountdown');
-        const startExerciseBtn = document.getElementById('startExerciseBtn');
-        const completeExerciseBtn = document.getElementById('completeExerciseBtn');
-        
-        const todayPomodorosEl = document.getElementById('todayPomodoros');
-        const todayMinutesEl = document.getElementById('todayMinutes');
-        const todayStreakEl = document.getElementById('todayStreak');
-        
-        const exercises = [
-            { emoji: '🧘', name: '颈部拉伸', description: '缓慢将头部向左侧倾斜，感受右侧颈部的拉伸感，保持15秒。然后慢慢回到中间，再向右侧倾斜。' },
-            { emoji: '💪', name: '肩部环绕', description: '双肩向上耸起，然后向前、向下、向后做圆周运动。重复10次后，反向再做10次。' },
-            { emoji: '🤸', name: '手臂伸展', description: '双手交叉举过头顶，掌心向上，慢慢向左右两侧伸展。感受腋下和腰部的拉伸。' },
-            { emoji: '🧎', name: '坐姿扭转', description: '坐在椅子上，身体慢慢向右侧扭转，右手抓住椅背。保持15秒后换另一侧。' },
-            { emoji: '🦵', name: '腿部拉伸', description: '双脚并拢站立，慢慢向前弯腰，双手尽量触摸地面。感受大腿后侧和背部的拉伸。' }
-        ];
-        
-        let currentExerciseIndex = 0;
-        
-        function updateTimerDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            const circumference = 2 * Math.PI * 130;
-            const progress = (totalTime - timeLeft) / totalTime;
-            const offset = circumference - (progress * circumference);
-            progressCircle.style.strokeDashoffset = offset;
-        }
-        
-        function drawPoseResults(results) {
-            const canvasCtx = outputCanvas.getContext('2d');
-            outputCanvas.width = videoElement.videoWidth || 640;
-            outputCanvas.height = videoElement.videoHeight || 480;
-            
-            canvasCtx.save();
-            canvasCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-            
-            if (results.poseLandmarks) {
-                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-                    color: '#00B894',
-                    lineWidth: 3
-                });
-                drawLandmarks(canvasCtx, results.poseLandmarks, {
-                    color: '#FF6B6B',
-                    lineWidth: 2,
-                    radius: 5
-                });
-            }
-            canvasCtx.restore();
-        }
-        
-        function isStandingPosition(landmarks) {
-            if (!landmarks) return false;
-            
-            const leftHip = landmarks[23];
-            const rightHip = landmarks[24];
-            const leftKnee = landmarks[25];
-            const rightKnee = landmarks[26];
-            
-            if (!leftHip || !rightHip || !leftKnee || !rightKnee) return false;
-            
-            const hipY = (leftHip.y + rightHip.y) / 2;
-            const kneeY = (leftKnee.y + rightKnee.y) / 2;
-            
-            return Math.abs(hipY - kneeY) > 0.15;
-        }
-        
-        function hasMovement(landmarks) {
-            if (!landmarks || !lastLandmarks) {
-                lastLandmarks = landmarks;
-                return false;
-            }
-            
-            let totalMovement = 0;
-            const keyPoints = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25, 26];
-            
-            keyPoints.forEach(index => {
-                if (landmarks[index] && lastLandmarks[index]) {
-                    const dx = landmarks[index].x - lastLandmarks[index].x;
-                    const dy = landmarks[index].y - lastLandmarks[index].y;
-                    totalMovement += Math.sqrt(dx * dx + dy * dy);
-                }
-            });
-            
-            lastLandmarks = landmarks;
-            return totalMovement > 0.05;
-        }
-        
-        function onResults(results) {
-            drawPoseResults(results);
-            
-            if (!results.poseLandmarks) {
-                detectionStatus.textContent = '🔍 未检测到人体';
-                detectionStatus.className = 'detection-status detection-inactive';
-                return;
-            }
-            
-            const standing = isStandingPosition(results.poseLandmarks);
-            const moving = hasMovement(results.poseLandmarks);
-            
-            if (standing) {
-                activityFrames++;
-                stationaryFrames = 0;
-                if (activityFrames > 5) isStanding = true;
-            } else {
-                stationaryFrames++;
-                activityFrames = 0;
-                if (stationaryFrames > 10) isStanding = false;
-            }
-            
-            if (moving) {
-                movementFrames = 10;
-            } else if (movementFrames > 0) {
-                movementFrames--;
-            }
-            isMoving = movementFrames > 0;
-            
-            updateDetectionStatus();
-        }
-        
-        function updateDetectionStatus() {
-            if (!isCameraActive) {
-                if (lastStatusText !== '📡 等待摄像头开启...') {
-                    detectionStatus.textContent = '📡 等待摄像头开启...';
-                    detectionStatus.className = 'detection-status detection-inactive';
-                    lastStatusText = '📡 等待摄像头开启...';
-                }
-                return;
-            }
-            
-            let newText = '';
-            if (isStanding && isMoving) {
-                newText = '✅ 检测到站立活动！';
-                if (timerState === 'break' && breathingOverlay.classList.contains('active')) {
-                    breathingOverlay.classList.remove('active');
-                }
-            } else if (isStanding) {
-                newText = '👀 已站立，请活动身体';
-            } else {
-                newText = '⚠️ 检测到久坐，请起身活动';
-            }
-            
-            if (newText !== lastStatusText) {
-                detectionStatus.textContent = newText;
-                detectionStatus.className = isStanding 
-                    ? 'detection-status detection-active' 
-                    : 'detection-status detection-inactive';
-                lastStatusText = newText;
-            }
-        }
-        
-        startBtn.addEventListener('click', () => {
-            if (timerState === 'idle' || timerState === 'paused') {
-                timerState = 'running';
-                timerStatus.textContent = '专注中...';
-                
-                timerInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
-                    
-                    if (timeLeft <= 0) {
-                        clearInterval(timerInterval);
-                        timerState = 'break';
-                        timerStatus.textContent = '休息时间！';
-                        breathingOverlay.classList.add('active');
-                    }
-                }, 1000);
-            }
-        });
-        
-        pauseBtn.addEventListener('click', () => {
-            if (timerState === 'running') {
-                timerState = 'paused';
-                timerStatus.textContent = '已暂停';
+<div class="breathing-overlay" id="breathingOverlay">
+    <div class="breath-circle"></div>
+    <div class="breath-text">
+        <div class="breath-title">站起来活动一下</div>
+        <div class="breath-sub">Pomo 在等你的身体</div>
+    </div>
+</div>
+
+<script>
+    let timerState = 'idle';
+    let timerInterval = null;
+    let timeLeft = 25 * 60;
+    let totalTime = 25 * 60;
+
+    let exerciseState = 'idle';
+    let exerciseInterval = null;
+    let exerciseTimeLeft = 30;
+
+    let todayPomodoros = 0;
+    let todayStreak = 7;
+
+    let pose = null;
+    let isCameraActive = false;
+    let isStanding = false;
+    let isMoving = false;
+    let lastLandmarks = null;
+    let activityFrames = 0;
+    let stationaryFrames = 0;
+    let movementFrames = 0;
+    let lastStatusText = '';
+
+    const heroRing = document.getElementById('heroRing');
+    const heroTime = document.getElementById('heroTime');
+    const heroLabel = document.getElementById('heroLabel');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    const heroStartBtn = document.getElementById('heroStartBtn');
+    const heroWatchBtn = document.getElementById('heroWatchBtn');
+    const navStartBtn = document.getElementById('navStartBtn');
+    const breathingOverlay = document.getElementById('breathingOverlay');
+
+    const videoElement = document.getElementById('videoElement');
+    const outputCanvas = document.getElementById('outputCanvas');
+    const camOverlay = document.getElementById('camOverlay');
+    const camStatus = document.getElementById('camStatus');
+    const detectionStatus = document.getElementById('detectionStatus');
+    const toggleCameraBtn = document.getElementById('toggleCameraBtn');
+
+    const exerciseImage = document.getElementById('exerciseImage');
+    const exerciseName = document.getElementById('exerciseName');
+    const exerciseDescription = document.getElementById('exerciseDescription');
+    const exerciseCountdown = document.getElementById('exerciseCountdown');
+    const exerciseProgressBar = document.getElementById('exerciseProgressBar');
+    const startExerciseBtn = document.getElementById('startExerciseBtn');
+    const completeExerciseBtn = document.getElementById('completeExerciseBtn');
+
+    const todayPomodorosEl = document.getElementById('todayPomodoros');
+    const todayStreakEl = document.getElementById('todayStreak');
+
+    const exercises = [
+        { emoji: '🧘', name: '颈部放松', desc: '缓慢将头部向左侧倾斜，感受右侧颈部的拉伸感，保持 15 秒。' },
+        { emoji: '💆', name: '肩部环绕', desc: '双肩向上耸起，然后向前、向下、向后做圆周运动。' },
+        { emoji: '🤸', name: '手臂伸展', desc: '双手交叉举过头顶，掌心向上，慢慢向左右两侧伸展。' },
+        { emoji: '🦵', name: '腿部拉伸', desc: '站立位，单脚脚跟向后贴近臀部，感受大腿前侧拉伸。' },
+        { emoji: '🧎', name: '坐姿扭转', desc: '坐在椅子上，身体慢慢向右侧扭转，保持 15 秒后换另一侧。' }
+    ];
+    let currentExerciseIndex = 0;
+
+    function updateTimer() {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        heroTime.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        const c = 2 * Math.PI * 96;
+        const p = (totalTime - timeLeft) / totalTime;
+        heroRing.style.strokeDashoffset = c - (p * c);
+    }
+
+    function startTimer() {
+        if (timerState === 'running') return;
+        if (timerState === 'paused') { timerState = 'running'; heroLabel.textContent = '专注中'; return; }
+        timerState = 'running';
+        heroLabel.textContent = '专注中';
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimer();
+            if (timeLeft <= 0) {
                 clearInterval(timerInterval);
+                timerState = 'break';
+                heroLabel.textContent = '休息一下';
+                breathingOverlay.classList.add('active');
             }
-        });
-        
-        resetBtn.addEventListener('click', () => {
-            timerState = 'idle';
-            timeLeft = 25 * 60;
-            totalTime = 25 * 60;
-            timerStatus.textContent = '准备开始';
-            updateTimerDisplay();
-            clearInterval(timerInterval);
-            breathingOverlay.classList.remove('active');
-        });
-        
-        finishBtn.addEventListener('click', () => {
-            if (timerState === 'running' || timerState === 'paused') {
-                clearInterval(timerInterval);
-                timerState = 'idle';
-                timeLeft = 25 * 60;
-                totalTime = 25 * 60;
-                timerStatus.textContent = '完成！';
-                updateTimerDisplay();
-                
-                todayPomodoros++;
-                todayPomodorosEl.textContent = todayPomodoros;
-            }
-        });
-        
-        toggleCameraBtn.addEventListener('click', async () => {
-            if (isCameraActive) {
-                const stream = videoElement.srcObject;
-                if (stream) stream.getTracks().forEach(track => track.stop());
-                videoElement.srcObject = null;
-                cameraOverlay.style.display = 'flex';
-                detectionStatus.textContent = '📡 等待摄像头开启...';
-                detectionStatus.className = 'detection-status detection-inactive';
-                toggleCameraBtn.textContent = '开启摄像头';
-                isCameraActive = false;
-                return;
-            }
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                videoElement.srcObject = stream;
-                
-                pose = new Pose({
-                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
-                });
-                
-                pose.setOptions({
-                    modelComplexity: 1,
-                    smoothLandmarks: true,
-                    enableSegmentation: false,
-                    minDetectionConfidence: 0.5,
-                    minTrackingConfidence: 0.5
-                });
-                
-                pose.onResults(onResults);
-                
-                cameraOverlay.style.display = 'none';
-                detectionStatus.textContent = '📡 正在初始化姿态检测...';
-                detectionStatus.className = 'detection-status detection-active';
-                toggleCameraBtn.textContent = '关闭摄像头';
-                isCameraActive = true;
-                
-                videoElement.onloadeddata = () => detectPose();
-            } catch (err) {
-                alert('无法访问摄像头，请检查权限设置');
-                console.error(err);
-            }
-        });
-        
-        async function detectPose() {
-            if (!isCameraActive || videoElement.readyState !== 4) return;
-            try { await pose.send({ image: videoElement }); }
-            catch (err) { console.error('Pose detection error:', err); }
-            requestAnimationFrame(detectPose);
-        }
-        
-        function switchExercise() {
-            currentExerciseIndex = (currentExerciseIndex + 1) % exercises.length;
-            const exercise = exercises[currentExerciseIndex];
-            exerciseImage.textContent = exercise.emoji;
-            exerciseName.textContent = exercise.name;
-            exerciseDescription.textContent = exercise.description;
-        }
-        
-        startExerciseBtn.addEventListener('click', () => {
-            if (exerciseState === 'idle') {
-                exerciseState = 'running';
-                exerciseTimeLeft = 30;
-                
-                exerciseInterval = setInterval(() => {
-                    exerciseTimeLeft--;
-                    exerciseCountdown.textContent = exerciseTimeLeft;
-                    
-                    if (exerciseTimeLeft <= 0) {
-                        switchExercise();
-                        exerciseTimeLeft = 30;
-                    }
-                }, 1000);
-            }
-        });
-        
-        completeExerciseBtn.addEventListener('click', () => {
-            if (exerciseState === 'running') {
-                clearInterval(exerciseInterval);
-                exerciseState = 'idle';
-                exerciseTimeLeft = 30;
-                exerciseCountdown.textContent = 30;
-                
-                todayMinutes += 5;
-                todayMinutesEl.textContent = todayMinutes;
-                
-                breathingOverlay.classList.remove('active');
-                
-                timerState = 'idle';
-                timeLeft = 25 * 60;
-                totalTime = 25 * 60;
-                timerStatus.textContent = '准备开始';
-                updateTimerDisplay();
-            }
-        });
-        
-        updateTimerDisplay();
+        }, 1000);
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerState = 'idle';
+        timeLeft = 25 * 60;
+        totalTime = 25 * 60;
+        heroLabel.textContent = '准备开始';
+        breathingOverlay.classList.remove('active');
+        updateTimer();
+    }
+
+    function finishPomo() {
+        clearInterval(timerInterval);
+        timerState = 'idle';
+        timeLeft = 25 * 60;
+        totalTime = 25 * 60;
+        heroLabel.textContent = '完成！';
+        breathingOverlay.classList.remove('active');
+        todayPomodoros++;
         todayPomodorosEl.textContent = todayPomodoros;
-        todayMinutesEl.textContent = todayMinutes;
-        todayStreakEl.textContent = todayStreak;
-    </script>
+        updateTimer();
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    finishBtn.addEventListener('click', finishPomo);
+    heroStartBtn.addEventListener('click', startTimer);
+    navStartBtn.addEventListener('click', () => document.querySelector('.hero-visual').scrollIntoView({ behavior: 'smooth' }));
+    heroWatchBtn.addEventListener('click', () => document.getElementById('method').scrollIntoView({ behavior: 'smooth' }));
+
+    function drawPose(results) {
+        const ctx = outputCanvas.getContext('2d');
+        outputCanvas.width = videoElement.videoWidth || 640;
+        outputCanvas.height = videoElement.videoHeight || 480;
+        ctx.save();
+        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+        if (results.poseLandmarks) {
+            drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#00D26A', lineWidth: 3 });
+            drawLandmarks(ctx, results.poseLandmarks, { color: '#FFFFFF', lineWidth: 2, radius: 4 });
+        }
+        ctx.restore();
+    }
+
+    function isStanding(landmarks) {
+        if (!landmarks) return false;
+        const lh = landmarks[23], rh = landmarks[24], lk = landmarks[25], rk = landmarks[26];
+        if (!lh || !rh || !lk || !rk) return false;
+        const hipY = (lh.y + rh.y) / 2;
+        const kneeY = (lk.y + rk.y) / 2;
+        return Math.abs(hipY - kneeY) > 0.15;
+    }
+
+    function hasMovement(landmarks) {
+        if (!landmarks || !lastLandmarks) { lastLandmarks = landmarks; return false; }
+        let total = 0;
+        [11, 12, 13, 14, 15, 16, 23, 24, 25, 26].forEach(i => {
+            if (landmarks[i] && lastLandmarks[i]) {
+                total += Math.hypot(landmarks[i].x - lastLandmarks[i].x, landmarks[i].y - lastLandmarks[i].y);
+            }
+        });
+        lastLandmarks = landmarks;
+        return total > 0.04;
+    }
+
+    function onResults(results) {
+        drawPose(results);
+        if (!results.poseLandmarks) {
+            updateCamStatus('未检测到人体', false);
+            return;
+        }
+        const standing = isStanding(results.poseLandmarks);
+        const moving = hasMovement(results.poseLandmarks);
+        if (standing) { activityFrames++; stationaryFrames = 0; if (activityFrames > 5) isStanding = true; }
+        else { stationaryFrames++; activityFrames = 0; if (stationaryFrames > 10) isStanding = false; }
+        if (moving) movementFrames = 12; else if (movementFrames > 0) movementFrames--;
+        isMoving = movementFrames > 0;
+        updateUI();
+    }
+
+    function updateUI() {
+        if (isStanding && isMoving) {
+            updateCamStatus('站立活动检测到', true);
+            if (timerState === 'break') breathingOverlay.classList.remove('active');
+        } else if (isStanding) {
+            updateCamStatus('已站立，请活动身体', true);
+        } else {
+            updateCamStatus('检测到久坐，请起身', false);
+        }
+    }
+
+    function updateCamStatus(text, active) {
+        if (text === lastStatusText) return;
+        lastStatusText = text;
+        detectionStatus.textContent = text;
+        camStatus.className = active ? 'cam-status' : 'cam-status inactive';
+    }
+
+    toggleCameraBtn.addEventListener('click', async () => {
+        if (isCameraActive) {
+            const s = videoElement.srcObject;
+            if (s) s.getTracks().forEach(t => t.stop());
+            videoElement.srcObject = null;
+            camOverlay.style.display = 'flex';
+            toggleCameraBtn.textContent = '开启摄像头';
+            isCameraActive = false;
+            lastStatusText = '';
+            updateCamStatus('等待开启', false);
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement.srcObject = stream;
+            pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
+            pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            pose.onResults(onResults);
+            camOverlay.style.display = 'none';
+            updateCamStatus('初始化姿态检测', true);
+            toggleCameraBtn.textContent = '关闭摄像头';
+            isCameraActive = true;
+            videoElement.onloadeddata = () => detectPose();
+        } catch (err) {
+            alert('无法访问摄像头，请检查权限设置');
+        }
+    });
+
+    async function detectPose() {
+        if (!isCameraActive || videoElement.readyState !== 4) return;
+        try { await pose.send({ image: videoElement }); } catch (e) {}
+        requestAnimationFrame(detectPose);
+    }
+
+    function switchExercise() {
+        currentExerciseIndex = (currentExerciseIndex + 1) % exercises.length;
+        const e = exercises[currentExerciseIndex];
+        exerciseImage.textContent = e.emoji;
+        exerciseName.textContent = e.name;
+        exerciseDescription.textContent = e.desc;
+    }
+
+    startExerciseBtn.addEventListener('click', () => {
+        if (exerciseState === 'idle') {
+            exerciseState = 'running';
+            exerciseTimeLeft = 30;
+            exerciseInterval = setInterval(() => {
+                exerciseTimeLeft--;
+                exerciseCountdown.textContent = exerciseTimeLeft;
+                exerciseProgressBar.style.width = ((30 - exerciseTimeLeft) / 30 * 100) + '%';
+                if (exerciseTimeLeft <= 0) { switchExercise(); exerciseTimeLeft = 30; }
+            }, 1000);
+        }
+    });
+
+    completeExerciseBtn.addEventListener('click', () => {
+        if (exerciseState === 'running') {
+            clearInterval(exerciseInterval);
+            exerciseState = 'idle';
+            exerciseTimeLeft = 30;
+            exerciseCountdown.textContent = 30;
+            exerciseProgressBar.style.width = '60%';
+            breathingOverlay.classList.remove('active');
+            resetTimer();
+        }
+    });
+
+    updateTimer();
+    todayPomodorosEl.textContent = todayPomodoros;
+    todayStreakEl.textContent = todayStreak;
+</script>
 </body>
 </html>
