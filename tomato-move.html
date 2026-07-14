@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>动动番茄钟 - 专注工作，也要动起来</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <style>
         * {
             margin: 0;
@@ -202,7 +204,9 @@
             font-size: 1.2rem;
         }
 
-        .camera-preview video {
+        .camera-preview video,
+        .camera-preview canvas {
+            position: absolute;
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -525,6 +529,7 @@
                         <button class="btn btn-primary" id="toggleCameraBtn">开启摄像头</button>
                     </div>
                     <video id="videoElement" autoplay playsinline></video>
+                    <canvas id="outputCanvas"></canvas>
                 </div>
                 <div class="detection-status detection-inactive" id="detectionStatus">
                     📡 等待摄像头开启...
@@ -607,9 +612,9 @@
 
     <script>
         // 番茄钟状态
-        let timerState = 'idle'; // idle, running, paused, break
+        let timerState = 'idle';
         let timerInterval = null;
-        let timeLeft = 25 * 60; // 25分钟
+        let timeLeft = 25 * 60;
         let totalTime = 25 * 60;
         
         // 活动状态
@@ -621,6 +626,15 @@
         let todayPomodoros = 0;
         let todayMinutes = 0;
         let todayStreak = 7;
+        
+        // MediaPipe Pose
+        let pose = null;
+        let isCameraActive = false;
+        let isStanding = false;
+        let isMoving = false;
+        let lastLandmarks = null;
+        let activityFrames = 0;
+        let stationaryFrames = 0;
         
         // DOM元素
         const timerDisplay = document.getElementById('timerDisplay');
@@ -635,6 +649,7 @@
         const cameraPreview = document.getElementById('cameraPreview');
         const cameraOverlay = document.getElementById('cameraOverlay');
         const videoElement = document.getElementById('videoElement');
+        const outputCanvas = document.getElementById('outputCanvas');
         const toggleCameraBtn = document.getElementById('toggleCameraBtn');
         const detectionStatus = document.getElementById('detectionStatus');
         
@@ -649,7 +664,6 @@
         const todayMinutesEl = document.getElementById('todayMinutes');
         const todayStreakEl = document.getElementById('todayStreak');
         
-        // 动作列表
         const exercises = [
             {
                 emoji: '🧘',
@@ -680,20 +694,131 @@
         
         let currentExerciseIndex = 0;
         
-        // 更新倒计时显示
         function updateTimerDisplay() {
             const minutes = Math.floor(timeLeft / 60);
             const seconds = timeLeft % 60;
             timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            // 更新进度环
             const circumference = 2 * Math.PI * 140;
             const progress = (totalTime - timeLeft) / totalTime;
             const offset = circumference - (progress * circumference);
             progressCircle.style.strokeDashoffset = offset;
         }
         
-        // 开始专注
+        function drawPoseResults(results) {
+            const canvasCtx = outputCanvas.getContext('2d');
+            outputCanvas.width = videoElement.videoWidth || 640;
+            outputCanvas.height = videoElement.videoHeight || 480;
+            
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            
+            if (results.poseLandmarks) {
+                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
+                    color: '#00B894',
+                    lineWidth: 3
+                });
+                drawLandmarks(canvasCtx, results.poseLandmarks, {
+                    color: '#FF6B6B',
+                    lineWidth: 2,
+                    radius: 5
+                });
+            }
+            canvasCtx.restore();
+        }
+        
+        function isStandingPosition(landmarks) {
+            if (!landmarks) return false;
+            
+            const leftHip = landmarks[23];
+            const rightHip = landmarks[24];
+            const leftKnee = landmarks[25];
+            const rightKnee = landmarks[26];
+            
+            if (!leftHip || !rightHip || !leftKnee || !rightKnee) return false;
+            
+            const hipY = (leftHip.y + rightHip.y) / 2;
+            const kneeY = (leftKnee.y + rightKnee.y) / 2;
+            
+            const hipKneeDistance = Math.abs(hipY - kneeY);
+            
+            return hipKneeDistance > 0.15;
+        }
+        
+        function hasMovement(landmarks) {
+            if (!landmarks || !lastLandmarks) {
+                lastLandmarks = landmarks;
+                return false;
+            }
+            
+            let totalMovement = 0;
+            const keyPoints = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 24, 25, 26];
+            
+            keyPoints.forEach(index => {
+                if (landmarks[index] && lastLandmarks[index]) {
+                    const dx = landmarks[index].x - lastLandmarks[index].x;
+                    const dy = landmarks[index].y - lastLandmarks[index].y;
+                    totalMovement += Math.sqrt(dx * dx + dy * dy);
+                }
+            });
+            
+            lastLandmarks = landmarks;
+            return totalMovement > 0.05;
+        }
+        
+        function onResults(results) {
+            drawPoseResults(results);
+            
+            if (!results.poseLandmarks) {
+                detectionStatus.textContent = '🔍 未检测到人体';
+                detectionStatus.className = 'detection-status detection-inactive';
+                return;
+            }
+            
+            const standing = isStandingPosition(results.poseLandmarks);
+            const moving = hasMovement(results.poseLandmarks);
+            
+            if (standing) {
+                activityFrames++;
+                stationaryFrames = 0;
+                if (activityFrames > 5) isStanding = true;
+            } else {
+                stationaryFrames++;
+                activityFrames = 0;
+                if (stationaryFrames > 10) isStanding = false;
+            }
+            
+            if (moving) {
+                isMoving = true;
+            }
+            
+            updateDetectionStatus();
+        }
+        
+        function updateDetectionStatus() {
+            if (!isCameraActive) {
+                detectionStatus.textContent = '📡 等待摄像头开启...';
+                detectionStatus.className = 'detection-status detection-inactive';
+                return;
+            }
+            
+            if (isStanding && isMoving) {
+                detectionStatus.textContent = '✅ 检测到站立活动！';
+                detectionStatus.className = 'detection-status detection-active';
+                if (timerState === 'break' && breathingOverlay.classList.contains('active')) {
+                    breathingOverlay.classList.remove('active');
+                }
+            } else if (isStanding) {
+                detectionStatus.textContent = '👀 已站立，请活动身体';
+                detectionStatus.className = 'detection-status detection-active';
+            } else {
+                detectionStatus.textContent = '⚠️ 检测到久坐，请起身活动';
+                detectionStatus.className = 'detection-status detection-inactive';
+            }
+            
+            isMoving = false;
+        }
+        
         startBtn.addEventListener('click', () => {
             if (timerState === 'idle' || timerState === 'paused') {
                 timerState = 'running';
@@ -709,21 +834,12 @@
                         timerState = 'break';
                         timerStatus.textContent = '休息时间！';
                         timerStatus.style.color = '#FFE66D';
-                        
-                        // 显示呼吸提醒
                         breathingOverlay.classList.add('active');
-                        
-                        // 检查是否有摄像头
-                        if (navigator.mediaDevices && videoElement.srcObject) {
-                            // 模拟检测用户是否活动
-                            setTimeout(checkActivity, 5000);
-                        }
                     }
                 }, 1000);
             }
         });
         
-        // 暂停
         pauseBtn.addEventListener('click', () => {
             if (timerState === 'running') {
                 timerState = 'paused';
@@ -732,7 +848,6 @@
             }
         });
         
-        // 重置
         resetBtn.addEventListener('click', () => {
             timerState = 'idle';
             timeLeft = 25 * 60;
@@ -744,7 +859,6 @@
             breathingOverlay.classList.remove('active');
         });
         
-        // 完成番茄钟
         finishBtn.addEventListener('click', () => {
             if (timerState === 'running' || timerState === 'paused') {
                 clearInterval(timerInterval);
@@ -755,43 +869,77 @@
                 timerStatus.style.color = '#4ECDC4';
                 updateTimerDisplay();
                 
-                // 更新数据
                 todayPomodoros++;
                 todayPomodorosEl.textContent = todayPomodoros;
             }
         });
         
-        // 模拟活动检测
-        function checkActivity() {
-            // 随机模拟检测结果
-            const isActive = Math.random() > 0.3;
-            
-            if (isActive) {
-                detectionStatus.textContent = '✅ 检测到活动！继续加油！';
-                detectionStatus.className = 'detection-status detection-active';
-                breathingOverlay.classList.remove('active');
-            } else {
-                detectionStatus.textContent = '⚠️ 检测到久坐，请立即活动！';
-                detectionStatus.className = 'detection-status detection-inactive';
-                // 呼吸提醒继续显示
-            }
-        }
-        
-        // 摄像头控制
         toggleCameraBtn.addEventListener('click', async () => {
+            if (isCameraActive) {
+                const stream = videoElement.srcObject;
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                videoElement.srcObject = null;
+                cameraOverlay.style.display = 'flex';
+                detectionStatus.textContent = '📡 等待摄像头开启...';
+                detectionStatus.className = 'detection-status detection-inactive';
+                toggleCameraBtn.textContent = '开启摄像头';
+                isCameraActive = false;
+                return;
+            }
+            
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
                 videoElement.srcObject = stream;
+                
+                pose = new Pose({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+                });
+                
+                pose.setOptions({
+                    modelComplexity: 1,
+                    smoothLandmarks: true,
+                    enableSegmentation: false,
+                    minDetectionConfidence: 0.5,
+                    minTrackingConfidence: 0.5
+                });
+                
+                pose.onResults(onResults);
+                
                 cameraOverlay.style.display = 'none';
-                detectionStatus.textContent = '📡 正在监测你的姿态...';
+                detectionStatus.textContent = '📡 正在初始化姿态检测...';
                 detectionStatus.className = 'detection-status detection-active';
                 toggleCameraBtn.textContent = '关闭摄像头';
+                isCameraActive = true;
+                
+                videoElement.onloadeddata = () => {
+                    detectPose();
+                };
             } catch (err) {
                 alert('无法访问摄像头，请检查权限设置');
+                console.error(err);
             }
         });
         
-        // 切换动作
+        async function detectPose() {
+            if (!isCameraActive || videoElement.readyState !== 4) return;
+            
+            try {
+                await pose.send({ image: videoElement });
+            } catch (err) {
+                console.error('Pose detection error:', err);
+            }
+            
+            requestAnimationFrame(detectPose);
+        }
+        
         function switchExercise() {
             currentExerciseIndex = (currentExerciseIndex + 1) % exercises.length;
             const exercise = exercises[currentExerciseIndex];
@@ -800,7 +948,6 @@
             exerciseDescription.textContent = exercise.description;
         }
         
-        // 开始活动
         startExerciseBtn.addEventListener('click', () => {
             if (exerciseState === 'idle') {
                 exerciseState = 'running';
@@ -818,7 +965,6 @@
             }
         });
         
-        // 完成活动
         completeExerciseBtn.addEventListener('click', () => {
             if (exerciseState === 'running') {
                 clearInterval(exerciseInterval);
@@ -826,14 +972,11 @@
                 exerciseTimeLeft = 30;
                 exerciseCountdown.textContent = 30;
                 
-                // 更新数据
                 todayMinutes += 5;
                 todayMinutesEl.textContent = todayMinutes;
                 
-                // 关闭呼吸提醒
                 breathingOverlay.classList.remove('active');
                 
-                // 重置番茄钟
                 timerState = 'idle';
                 timeLeft = 25 * 60;
                 totalTime = 25 * 60;
@@ -843,7 +986,6 @@
             }
         });
         
-        // 初始化显示
         updateTimerDisplay();
         todayPomodorosEl.textContent = todayPomodoros;
         todayMinutesEl.textContent = todayMinutes;
