@@ -889,6 +889,16 @@
                 return;
             }
             
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('您的浏览器不支持摄像头访问功能，请使用 Chrome、Safari 或 Firefox 浏览器');
+                return;
+            }
+            
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                alert('摄像头访问需要在安全环境下运行，请使用 HTTPS 或 localhost 访问');
+                return;
+            }
+            
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
@@ -923,8 +933,18 @@
                     detectPose();
                 };
             } catch (err) {
-                alert('无法访问摄像头，请检查权限设置');
-                console.error(err);
+                let message = '无法访问摄像头';
+                if (err.name === 'NotAllowedError') {
+                    message = '摄像头权限被拒绝，请在浏览器设置中允许访问摄像头';
+                } else if (err.name === 'NotFoundError') {
+                    message = '未检测到摄像头设备，请检查设备连接';
+                } else if (err.name === 'NotReadableError') {
+                    message = '摄像头被其他应用占用，请关闭其他使用摄像头的程序';
+                } else if (err.name === 'SecurityError') {
+                    message = '安全错误，请使用 HTTPS 或 localhost 访问';
+                }
+                alert(message);
+                console.error('Camera error:', err);
             }
         });
         
