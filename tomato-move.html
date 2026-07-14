@@ -332,7 +332,7 @@
         .tile-data { grid-column: span 3; grid-row: span 1; }
 
         /* Row 2: Camera (4 cols, ~2/3) + Exercise (2 cols, ~1/3) */
-        .tile-cam { grid-column: span 4; grid-row: span 2; background: var(--ink); color: var(--paper); border: none; }
+        .tile-cam { grid-column: span 4; grid-row: span 3; min-height: 520px; background: var(--ink); color: var(--paper); border: none; padding: 10px; }
         .tile-cam:hover { transform: none; }
         .tile-exercise { grid-column: span 2; grid-row: span 2; background: var(--moss); color: var(--paper); border: none; }
         .tile-exercise:hover { transform: none; }
@@ -349,6 +349,19 @@
             letter-spacing: 0.1em;
         }
         .tile-cam .tile-label, .tile-exercise .tile-label { color: rgba(255,255,255,0.7); }
+        .tile-cam > .tile-label {
+            position: absolute;
+            top: 26px;
+            left: 28px;
+            z-index: 7;
+            margin: 0;
+            padding: 7px 11px;
+            border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 999px;
+            background: rgba(10,10,11,0.46);
+            backdrop-filter: blur(12px);
+            color: rgba(255,255,255,0.9);
+        }
         .tile-cam .tile-label::before, .tile-exercise .tile-label::before {
             content: '';
             width: 6px;
@@ -364,9 +377,10 @@
         .cam-stage {
             position: relative;
             width: 100%;
-            height: calc(100% - 40px);
+            height: 100%;
             background: #1A1A1E;
-            border-radius: 18px;
+            min-height: 500px;
+            border-radius: 20px;
             overflow: hidden;
         }
         .cam-stage video, .cam-stage canvas {
@@ -380,7 +394,9 @@
         .cam-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0,0,0,0.7);
+            background:
+                radial-gradient(circle at 50% 42%, rgba(255,255,255,0.06), transparent 34%),
+                rgba(7,8,8,0.76);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -390,8 +406,11 @@
             z-index: 5;
         }
         .cam-overlay-text {
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
+            max-width: 310px;
+            font-size: 15px;
+            line-height: 1.55;
+            text-align: center;
+            color: rgba(255,255,255,0.72);
         }
         .cam-btn {
             padding: 10px 20px;
@@ -422,13 +441,36 @@
             cursor: pointer;
         }
         .cam-close-btn.visible { display: block; }
+        .cam-guide {
+            position: absolute;
+            top: 68px;
+            left: 18px;
+            z-index: 6;
+            display: none;
+            gap: 7px;
+            flex-wrap: wrap;
+            max-width: calc(100% - 36px);
+            pointer-events: none;
+        }
+        .cam-guide.visible { display: flex; }
+        .cam-guide span {
+            padding: 7px 10px;
+            border: 1px solid rgba(255,255,255,0.16);
+            border-radius: 999px;
+            background: rgba(10,10,11,0.46);
+            backdrop-filter: blur(12px);
+            color: rgba(255,255,255,0.88);
+            font-size: 11px;
+            letter-spacing: 0.02em;
+        }
         .cam-status {
             position: absolute;
-            bottom: 16px;
-            left: 16px;
-            right: 16px;
-            padding: 12px 16px;
-            background: rgba(255,255,255,0.95);
+            bottom: 18px;
+            left: 18px;
+            right: auto;
+            width: min(430px, calc(100% - 36px));
+            padding: 11px 14px;
+            background: rgba(255,255,255,0.92);
             backdrop-filter: blur(10px);
             border-radius: 12px;
             font-size: 13px;
@@ -1038,7 +1080,8 @@
             .tile-timer, .tile-data, .tile-cam, .tile-exercise {
                 grid-column: span 1; grid-row: span 1;
             }
-            .tile-cam { min-height: 360px; }
+            .tile-cam { min-height: 440px; }
+            .cam-stage { min-height: 420px; }
             .tile-data { min-height: 270px; }
             .data-num { font-size: 46px; }
             .principles { grid-template-columns: 1fr; gap: 32px; }
@@ -1101,7 +1144,7 @@
                 <button class="ctrl primary" id="startBtn" title="开始">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                 </button>
-                <button class="ctrl" id="finishBtn" title="完成">
+                <button class="ctrl" id="finishBtn" title="提前结束专注并休息">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 </button>
             </div>
@@ -1130,8 +1173,8 @@
                     </div>
                     <div class="data-mini">
                         <div>
-                            <div class="data-mini-label">连续坚持</div>
-                            <div class="data-mini-value"><span id="todayStreak">7</span><small>天</small></div>
+                            <div class="data-mini-label">有效休息</div>
+                            <div class="data-mini-value"><span id="todayBreaks">0</span><small>次</small></div>
                         </div>
                         <div class="data-mini-icon">✦</div>
                     </div>
@@ -1140,19 +1183,22 @@
         </div>
 
         <div class="tile tile-cam">
-            <div class="tile-label">姿态检测 · Live</div>
+            <div class="tile-label">有效休息验证 · Live</div>
             <div class="cam-stage">
                 <div class="cam-overlay" id="camOverlay">
-                    <div class="cam-overlay-text">摄像头未开启</div>
-                    <button class="cam-btn" id="toggleCameraBtn">开启摄像头</button>
+                    <div class="cam-overlay-text">无需拍到全身。坐在屏幕前，让头部、肩膀和手臂进入画面即可。</div>
+                    <button class="cam-btn" id="toggleCameraBtn">开启上半身检测</button>
                 </div>
                 <video id="videoElement" autoplay playsinline></video>
                 <canvas id="outputCanvas"></canvas>
                 <button class="cam-close-btn" id="cameraStopBtn">关闭摄像头</button>
+                <div class="cam-guide" id="camGuide" aria-hidden="true">
+                    <span>① 左右转头</span><span>② 放松肩颈</span><span>③ 活动手臂</span>
+                </div>
                 <div class="cam-status inactive" id="camStatus">
                     <div class="cam-status-body">
                         <span class="cam-status-title" id="detectionStatus">等待开启</span>
-                        <small class="cam-status-hint" id="detectionHint">开启后请确保全身进入画面</small>
+                        <small class="cam-status-hint" id="detectionHint">休息时开启，只检测头部与上半身活动</small>
                     </div>
                     <div class="cam-progress" aria-hidden="true"><div class="cam-progress-fill" id="camProgressFill"></div></div>
                 </div>
@@ -1190,18 +1236,18 @@
     <div class="principles">
         <div>
             <div class="principle-num">01</div>
-            <h3 class="principle-title">久坐 45 分钟后，专注力断崖下降</h3>
-            <p class="principle-text">根据《柳叶刀》子刊研究，连续久坐超过 45 分钟，即使身体健康的人，大脑前额叶的活跃度也会显著降低。</p>
+            <h3 class="principle-title">长时间静止，会让身体和注意力一起疲劳</h3>
+            <p class="principle-text">持续面对屏幕时，我们很容易忽略肩颈紧张和身体僵硬。定时打断静止状态，是建立可持续工作节奏的第一步。</p>
         </div>
         <div>
             <div class="principle-num">02</div>
-            <h3 class="principle-title">2 分钟站立 = 23% 认知回升</h3>
-            <p class="principle-text">站立 2 分钟并配合轻度拉伸，能让脑部血流量恢复 23%。这一个番茄钟的回报，远比你刷 5 分钟手机高。</p>
+            <h3 class="principle-title">真正的休息，需要离开原来的静止状态</h3>
+            <p class="principle-text">休息不只是切换屏幕内容。转动头部、放松肩颈或伸展手臂，能让身体从持续伏案的状态中短暂抽离。</p>
         </div>
         <div>
             <div class="principle-num">03</div>
             <h3 class="principle-title">习惯需要闭环反馈</h3>
-            <p class="principle-text">单纯靠意志力提醒自己活动，平均坚持不超过 11 天。Pomo 用摄像头给你最直接的闭环：你动了，番茄才算完成。</p>
+            <p class="principle-text">单纯靠意志力提醒自己活动，很难形成稳定习惯。Pomo 用摄像头补上最直接的闭环：你真的动了，才记为一次有效休息。</p>
         </div>
     </div>
 </section>
@@ -1239,12 +1285,12 @@
 <div class="breathing-overlay" id="breathingOverlay">
     <div class="breath-circle"></div>
     <div class="breath-text">
-        <div class="breath-title">站起来活动一下</div>
-        <div class="breath-sub">Pomo 在等你的身体</div>
+        <div class="breath-title">该让身体离开静止状态了</div>
+        <div class="breath-sub">不用离开座位，转转头、松松肩、伸伸手臂</div>
     </div>
     <div class="breath-actions">
-        <button class="breath-btn" id="dismissBreakBtn">稍后提醒</button>
-        <button class="breath-btn primary" id="startBreakExerciseBtn">开始 30 秒活动</button>
+        <button class="breath-btn" id="dismissBreakBtn">暂不休息</button>
+        <button class="breath-btn primary" id="startBreakExerciseBtn">开始有效休息</button>
     </div>
 </div>
 
@@ -1260,7 +1306,7 @@
 
     let todayPomodoros = 0;
     let todayMinutes = 0;
-    let todayStreak = 7;
+    let todayBreaks = 0;
 
     let pose = null;
     let isCameraActive = false;
@@ -1275,18 +1321,21 @@
     let isPoseProcessing = false;
     let consecutivePoseErrors = 0;
     let activityAwardedForBreak = false;
+    let observedMovements = new Set();
 
     const POSE_CONFIG = {
         minVisibility: 0.58,
-        standingAngle: 152,
-        standingConfirmMs: 900,
+        readyConfirmMs: 650,
         lostPersonMs: 650,
         movementWindowMs: 1200,
-        movementThreshold: 0.025,
-        movementRatio: 0.28,
-        activityGoalMs: 5000,
+        movementThreshold: 0.018,
+        movementRatio: 0.24,
+        headTurnThreshold: 0.055,
+        activityGoalMs: 6000,
         maxInferenceFps: 12
     };
+    const UPPER_BODY_CONNECTIONS = [[11, 12], [11, 13], [13, 15], [12, 14], [14, 16], [0, 7], [0, 8]];
+    const UPPER_BODY_LANDMARKS = [0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16];
 
     const heroTime = document.getElementById('heroTime');
     const heroLabel = document.getElementById('heroLabel');
@@ -1306,6 +1355,7 @@
     const detectionStatus = document.getElementById('detectionStatus');
     const detectionHint = document.getElementById('detectionHint');
     const camProgressFill = document.getElementById('camProgressFill');
+    const camGuide = document.getElementById('camGuide');
     const toggleCameraBtn = document.getElementById('toggleCameraBtn');
     const cameraStopBtn = document.getElementById('cameraStopBtn');
 
@@ -1319,7 +1369,7 @@
 
     const todayPomodorosEl = document.getElementById('todayPomodoros');
     const todayMinutesEl = document.getElementById('todayMinutes');
-    const todayStreakEl = document.getElementById('todayStreak');
+    const todayBreaksEl = document.getElementById('todayBreaks');
     const todayDateEl = document.getElementById('todayDate');
 
     const exercises = [
@@ -1343,6 +1393,7 @@
             if (saved) {
                 todayPomodoros = Number(saved.pomodoros) || 0;
                 todayMinutes = Number(saved.minutes) || 0;
+                todayBreaks = Number(saved.breaks) || 0;
             }
         } catch (error) {
             console.warn('今日数据读取失败，将使用默认值。', error);
@@ -1351,7 +1402,7 @@
 
     function saveDailyStats() {
         try {
-            localStorage.setItem(statsStorageKey, JSON.stringify({ pomodoros: todayPomodoros, minutes: todayMinutes }));
+            localStorage.setItem(statsStorageKey, JSON.stringify({ pomodoros: todayPomodoros, minutes: todayMinutes, breaks: todayBreaks }));
         } catch (error) {
             console.warn('今日数据暂时无法保存。', error);
         }
@@ -1384,10 +1435,9 @@
             return;
         }
         if (timerState === 'break') {
-            timeLeft = 25 * 60;
-            totalTime = 25 * 60;
-            breathingOverlay.classList.remove('active');
-            updateTimer();
+            heroLabel.textContent = '请先完成有效休息';
+            breathingOverlay.classList.add('active');
+            return;
         }
         timerState = 'running';
         heroLabel.textContent = '专注中';
@@ -1396,15 +1446,25 @@
             timeLeft--;
             updateTimer();
             if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-                timerState = 'break';
-                activityAwardedForBreak = false;
-                heroLabel.textContent = '休息一下';
-                setTimerButton('play');
-                breathingOverlay.classList.add('active');
+                enterBreak();
             }
         }, 1000);
+    }
+
+    function enterBreak() {
+        if (timerState === 'break') return;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerState = 'break';
+        activityAwardedForBreak = false;
+        observedMovements = new Set();
+        resetPoseTracking();
+        todayPomodoros++;
+        todayPomodorosEl.textContent = todayPomodoros;
+        saveDailyStats();
+        heroLabel.textContent = '等待有效休息';
+        setTimerButton('play');
+        breathingOverlay.classList.add('active');
     }
 
     function resetTimer() {
@@ -1420,18 +1480,7 @@
     }
 
     function finishPomo() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerState = 'idle';
-        timeLeft = 25 * 60;
-        totalTime = 25 * 60;
-        heroLabel.textContent = '完成！';
-        setTimerButton('play');
-        breathingOverlay.classList.remove('active');
-        todayPomodoros++;
-        todayPomodorosEl.textContent = todayPomodoros;
-        saveDailyStats();
-        updateTimer();
+        enterBreak();
     }
 
     startBtn.addEventListener('click', startTimer);
@@ -1451,8 +1500,8 @@
         ctx.save();
         ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
         if (results.poseLandmarks && typeof drawConnectors === 'function' && typeof drawLandmarks === 'function') {
-            drawConnectors(ctx, results.poseLandmarks, POSE_CONNECTIONS, { color: '#00D26A', lineWidth: 3 });
-            drawLandmarks(ctx, results.poseLandmarks, { color: '#FFFFFF', lineWidth: 2, radius: 4 });
+            drawConnectors(ctx, results.poseLandmarks, UPPER_BODY_CONNECTIONS, { color: 'rgba(75, 232, 150, 0.78)', lineWidth: 2 });
+            drawLandmarks(ctx, UPPER_BODY_LANDMARKS.map(index => results.poseLandmarks[index]), { color: 'rgba(255,255,255,0.9)', lineWidth: 1, radius: 3 });
         }
         ctx.restore();
     }
@@ -1469,41 +1518,19 @@
         return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     }
 
-    function jointAngle(a, b, c) {
-        const ab = { x: a.x - b.x, y: a.y - b.y };
-        const cb = { x: c.x - b.x, y: c.y - b.y };
-        const denominator = Math.hypot(ab.x, ab.y) * Math.hypot(cb.x, cb.y);
-        if (!denominator) return 0;
-        const cosine = Math.max(-1, Math.min(1, (ab.x * cb.x + ab.y * cb.y) / denominator));
-        return Math.acos(cosine) * 180 / Math.PI;
-    }
-
-    function classifyStanding(landmarks) {
-        const leftAngle = jointAngle(landmarks[23], landmarks[25], landmarks[27]);
-        const rightAngle = jointAngle(landmarks[24], landmarks[26], landmarks[28]);
-        const kneeAngle = (leftAngle + rightAngle) / 2;
-        const shoulderCenter = midpoint(landmarks[11], landmarks[12]);
-        const hipCenter = midpoint(landmarks[23], landmarks[24]);
-        const ankleCenter = midpoint(landmarks[27], landmarks[28]);
-        const torsoLength = Math.max(Math.hypot(shoulderCenter.x - hipCenter.x, shoulderCenter.y - hipCenter.y), 0.05);
-        const legExtension = Math.abs(ankleCenter.y - hipCenter.y) / torsoLength;
-        return kneeAngle >= POSE_CONFIG.standingAngle && legExtension >= 1.25;
-    }
-
     function normalizeMovementPose(landmarks) {
-        const center = midpoint(landmarks[23], landmarks[24]);
-        const shoulderCenter = midpoint(landmarks[11], landmarks[12]);
-        const scale = Math.max(Math.hypot(shoulderCenter.x - center.x, shoulderCenter.y - center.y), 0.05);
-        const indexes = [11, 12, 13, 14, 15, 16, 25, 26, 27, 28];
+        const center = midpoint(landmarks[11], landmarks[12]);
+        const scale = Math.max(Math.hypot(landmarks[11].x - landmarks[12].x, landmarks[11].y - landmarks[12].y), 0.08);
+        const indexes = [0, 2, 5, 7, 8, 11, 12, 13, 14, 15, 16];
         return indexes
             .filter(index => isVisible(landmarks[index]))
             .map(index => ({ index, x: (landmarks[index].x - center.x) / scale, y: (landmarks[index].y - center.y) / scale }));
     }
 
-    function movementScore(current, previous) {
+    function movementScore(current, previous, indexes = null) {
         if (!current || !previous) return 0;
         const previousByIndex = new Map(previous.map(point => [point.index, point]));
-        const distances = current.flatMap(point => {
+        const distances = current.filter(point => !indexes || indexes.includes(point.index)).flatMap(point => {
             const before = previousByIndex.get(point.index);
             return before ? [Math.hypot(point.x - before.x, point.y - before.y)] : [];
         });
@@ -1513,14 +1540,25 @@
     function detectMovementEvidence(landmarks, now) {
         const normalized = normalizeMovementPose(landmarks);
         const score = movementScore(normalized, lastNormalizedPose);
+        const headScore = movementScore(normalized, lastNormalizedPose, [0, 2, 5, 7, 8]);
+        const armScore = movementScore(normalized, lastNormalizedPose, [13, 14, 15, 16]);
+        const shoulderCenter = midpoint(landmarks[11], landmarks[12]);
+        const eyeCenter = midpoint(landmarks[2], landmarks[5]);
+        const shoulderWidth = Math.max(Math.abs(landmarks[11].x - landmarks[12].x), 0.08);
+        const headTurned = Math.abs(landmarks[0].x - eyeCenter.x) / shoulderWidth >= POSE_CONFIG.headTurnThreshold ||
+            Math.abs(landmarks[0].x - shoulderCenter.x) / shoulderWidth >= 0.18;
         lastNormalizedPose = normalized;
         movementSamples.push({ time: now, score });
         movementSamples = movementSamples.filter(sample => now - sample.time <= POSE_CONFIG.movementWindowMs);
-        if (movementSamples.length < 4) return false;
+        if (movementSamples.length < 4) return { moving: false, headMoving: false, armsMoving: false };
         const activeSamples = movementSamples.filter(sample => sample.score >= POSE_CONFIG.movementThreshold).length;
         const activeRatio = activeSamples / movementSamples.length;
         const averageScore = movementSamples.reduce((sum, sample) => sum + sample.score, 0) / movementSamples.length;
-        return activeRatio >= POSE_CONFIG.movementRatio && averageScore >= POSE_CONFIG.movementThreshold * 0.55;
+        return {
+            moving: activeRatio >= POSE_CONFIG.movementRatio && averageScore >= POSE_CONFIG.movementThreshold * 0.55,
+            headMoving: headScore >= POSE_CONFIG.movementThreshold * 0.75 || headTurned,
+            armsMoving: armScore >= POSE_CONFIG.movementThreshold
+        };
     }
 
     function resetPoseTracking() {
@@ -1529,6 +1567,7 @@
         movementSamples = [];
         lastNormalizedPose = null;
         lastPoseResultAt = 0;
+        observedMovements = new Set();
     }
 
     function updateCamStatus(state, title, hint, tone = 'inactive', progress = 0) {
@@ -1544,10 +1583,16 @@
         if (timerState === 'break' && !activityAwardedForBreak) {
             activityAwardedForBreak = true;
             todayMinutes += 1;
+            todayBreaks += 1;
             todayMinutesEl.textContent = todayMinutes;
+            todayBreaksEl.textContent = todayBreaks;
             saveDailyStats();
             breathingOverlay.classList.remove('active');
-            heroLabel.textContent = '活动完成';
+            timerState = 'idle';
+            timeLeft = 25 * 60;
+            totalTime = 25 * 60;
+            updateTimer();
+            heroLabel.textContent = '有效休息完成';
         }
     }
 
@@ -1557,54 +1602,47 @@
         lastPoseResultAt = now;
         drawPose(results);
         const landmarks = results.poseLandmarks;
-        const coreVisible = landmarks && hasVisiblePoints(landmarks, [11, 12, 23, 24]);
+        const coreVisible = landmarks && hasVisiblePoints(landmarks, [0, 11, 12]);
         if (!coreVisible) {
             if (!missingSince) missingSince = now;
             if (now - missingSince >= POSE_CONFIG.lostPersonMs) {
                 resetPoseTracking();
-                updateCamStatus('no-person', '未检测到人体', '站到镜头前，并让全身进入画面', 'inactive', 0);
+                updateCamStatus('no-person', '未检测到上半身', '坐在镜头前，让头部和双肩进入画面', 'inactive', 0);
             }
             return;
         }
         missingSince = 0;
 
-        if (!hasVisiblePoints(landmarks, [25, 26, 27, 28])) {
+        if (!hasVisiblePoints(landmarks, [2, 5, 13, 14])) {
             resetPoseTracking();
-            updateCamStatus('partial', '请完整入镜', '后退一点，确保膝盖和脚踝都在画面中', 'warning', 0);
-            return;
-        }
-
-        const standing = classifyStanding(landmarks);
-        if (!standing) {
-            standingCandidateSince = 0;
-            activityProgressMs = Math.max(0, activityProgressMs - deltaMs * 1.5);
-            movementSamples = [];
-            lastNormalizedPose = null;
-            updateCamStatus('sitting', '检测到坐姿', '请站起来，并保持身体完整入镜', 'inactive', 0);
+            updateCamStatus('partial', '调整一下画面', '确保脸部、双肩和手肘进入画面即可', 'warning', 0);
             return;
         }
 
         if (!standingCandidateSince) standingCandidateSince = now;
         const standingElapsed = now - standingCandidateSince;
-        if (standingElapsed < POSE_CONFIG.standingConfirmMs) {
-            updateCamStatus('standing-confirm', '正在确认站立', '保持站直，不要离开画面', 'warning', standingElapsed / POSE_CONFIG.standingConfirmMs * 100);
+        if (standingElapsed < POSE_CONFIG.readyConfirmMs) {
+            updateCamStatus('ready-confirm', '正在确认上半身', '保持头部和肩膀在画面中', 'warning', standingElapsed / POSE_CONFIG.readyConfirmMs * 100);
             return;
         }
 
-        const moving = detectMovementEvidence(landmarks, now);
-        activityProgressMs = moving
+        const evidence = detectMovementEvidence(landmarks, now);
+        if (evidence.headMoving) observedMovements.add('转头');
+        if (evidence.armsMoving) observedMovements.add('手臂');
+        const cue = observedMovements.size ? `已识别：${[...observedMovements].join('、')}` : '试试左右转头，或抬起手臂伸展';
+        activityProgressMs = evidence.moving
             ? Math.min(POSE_CONFIG.activityGoalMs, activityProgressMs + deltaMs)
             : Math.max(0, activityProgressMs - deltaMs * 0.45);
         const activityProgress = activityProgressMs / POSE_CONFIG.activityGoalMs * 100;
 
         if (activityProgressMs >= POSE_CONFIG.activityGoalMs) {
-            updateCamStatus('complete', '活动完成', '做得很好，已经完成一次身体活动', 'complete', 100);
+            updateCamStatus('complete', '有效休息完成', '已确认你真的从静止状态中活动起来', 'complete', 100);
             completeDetectedActivity();
         } else if (activityProgressMs > 0) {
             const secondsLeft = Math.max(1, Math.ceil((POSE_CONFIG.activityGoalMs - activityProgressMs) / 1000));
-            updateCamStatus('moving', '正在记录活动', `继续活动手臂或腿部，还需约 ${secondsLeft} 秒`, 'active', activityProgress);
+            updateCamStatus('moving', '正在验证有效休息', `${cue} · 再活动约 ${secondsLeft} 秒`, 'active', activityProgress);
         } else {
-            updateCamStatus('standing', '站立已确认', '开始活动手臂或腿部，持续约 5 秒', 'active', 0);
+            updateCamStatus('ready', '上半身已识别', cue, 'active', 0);
         }
     }
 
@@ -1616,6 +1654,7 @@
         videoElement.onloadeddata = null;
         camOverlay.style.display = 'flex';
         cameraStopBtn.classList.remove('visible');
+        camGuide.classList.remove('visible');
         if (pose && typeof pose.close === 'function') {
             const closeResult = pose.close();
             if (closeResult && typeof closeResult.catch === 'function') closeResult.catch(() => {});
@@ -1624,7 +1663,7 @@
         isPoseProcessing = false;
         missingSince = 0;
         resetPoseTracking();
-        updateCamStatus('idle', '等待开启', '开启后请确保全身进入画面', 'inactive', 0);
+        updateCamStatus('idle', '等待开启', '休息时开启，只检测头部与上半身活动', 'inactive', 0);
     }
 
     toggleCameraBtn.addEventListener('click', async () => {
@@ -1641,10 +1680,11 @@
             pose.onResults(onResults);
             camOverlay.style.display = 'none';
             cameraStopBtn.classList.add('visible');
+            camGuide.classList.add('visible');
             resetPoseTracking();
             missingSince = 0;
             consecutivePoseErrors = 0;
-            updateCamStatus('initializing', '正在初始化检测', '请后退，让肩、髋、膝和脚踝都进入画面', 'warning', 0);
+            updateCamStatus('initializing', '正在初始化检测', '坐在原位，让头部、双肩和手肘进入画面', 'warning', 0);
             isCameraActive = true;
             videoElement.onloadeddata = () => requestAnimationFrame(detectPose);
         } catch (err) {
@@ -1711,8 +1751,8 @@
     startExerciseBtn.addEventListener('click', startExercise);
     startBreakExerciseBtn.addEventListener('click', () => {
         breathingOverlay.classList.remove('active');
-        document.querySelector('.tile-exercise').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        startExercise();
+        document.querySelector('.tile-cam').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (!isCameraActive) toggleCameraBtn.click();
     });
 
     completeExerciseBtn.addEventListener('click', () => {
@@ -1725,11 +1765,12 @@
             startExerciseBtn.textContent = '开始';
             startExerciseBtn.disabled = false;
             completeExerciseBtn.disabled = true;
-            todayMinutes += 5;
-            todayMinutesEl.textContent = todayMinutes;
-            saveDailyStats();
-            breathingOverlay.classList.remove('active');
-            resetTimer();
+            completeDetectedActivity();
+            if (timerState !== 'idle') {
+                todayMinutes += 1;
+                todayMinutesEl.textContent = todayMinutes;
+                saveDailyStats();
+            }
         }
     });
 
@@ -1739,7 +1780,7 @@
     todayDateEl.textContent = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short' }).format(new Date());
     todayPomodorosEl.textContent = todayPomodoros;
     todayMinutesEl.textContent = todayMinutes;
-    todayStreakEl.textContent = todayStreak;
+    todayBreaksEl.textContent = todayBreaks;
 </script>
 </body>
 </html>
