@@ -815,6 +815,8 @@
         let lastLandmarks = null;
         let activityFrames = 0;
         let stationaryFrames = 0;
+        let movementFrames = 0;
+        let lastStatusText = '';
         
         const timerDisplay = document.getElementById('timerDisplay');
         const timerStatus = document.getElementById('timerStatus');
@@ -944,33 +946,45 @@
                 if (stationaryFrames > 10) isStanding = false;
             }
             
-            if (moving) isMoving = true;
+            if (moving) {
+                movementFrames = 10;
+            } else if (movementFrames > 0) {
+                movementFrames--;
+            }
+            isMoving = movementFrames > 0;
             
             updateDetectionStatus();
         }
         
         function updateDetectionStatus() {
             if (!isCameraActive) {
-                detectionStatus.textContent = '📡 等待摄像头开启...';
-                detectionStatus.className = 'detection-status detection-inactive';
+                if (lastStatusText !== '📡 等待摄像头开启...') {
+                    detectionStatus.textContent = '📡 等待摄像头开启...';
+                    detectionStatus.className = 'detection-status detection-inactive';
+                    lastStatusText = '📡 等待摄像头开启...';
+                }
                 return;
             }
             
+            let newText = '';
             if (isStanding && isMoving) {
-                detectionStatus.textContent = '✅ 检测到站立活动！';
-                detectionStatus.className = 'detection-status detection-active';
+                newText = '✅ 检测到站立活动！';
                 if (timerState === 'break' && breathingOverlay.classList.contains('active')) {
                     breathingOverlay.classList.remove('active');
                 }
             } else if (isStanding) {
-                detectionStatus.textContent = '👀 已站立，请活动身体';
-                detectionStatus.className = 'detection-status detection-active';
+                newText = '👀 已站立，请活动身体';
             } else {
-                detectionStatus.textContent = '⚠️ 检测到久坐，请起身活动';
-                detectionStatus.className = 'detection-status detection-inactive';
+                newText = '⚠️ 检测到久坐，请起身活动';
             }
             
-            isMoving = false;
+            if (newText !== lastStatusText) {
+                detectionStatus.textContent = newText;
+                detectionStatus.className = isStanding 
+                    ? 'detection-status detection-active' 
+                    : 'detection-status detection-inactive';
+                lastStatusText = newText;
+            }
         }
         
         startBtn.addEventListener('click', () => {
